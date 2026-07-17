@@ -23,7 +23,20 @@ and the environment will be automatically solved and activated when necessary.
 
 
 ```sh
+# test all units
 uv run pytest
+
+# test specific unit
+uv run pytest tests/test_tokenizer.py
+
+# stop on first error
+uv run pytest tests/test_tokenizer.py -x
+
+# show print output
+uv run pytest tests/test_tokenizer.py -s
+
+# only last failed
+uv run pytest tests/test_tokenizer.py -lf
 ```
 
 Initially, all tests should fail with `NotImplementedError`s.
@@ -47,4 +60,3 @@ gunzip owt_valid.txt.gz
 
 cd ..
 ```
-
