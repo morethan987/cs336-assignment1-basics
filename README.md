@@ -50,13 +50,34 @@ Download the TinyStories data and a subsample of OpenWebText
 mkdir -p data
 cd data
 
+# wget
 wget https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-train.txt
 wget https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-valid.txt
+# curl
+curl -L -O https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-train.txt
+curl -L -O https://huggingface.co/datasets/roneneldan/TinyStories/resolve/main/TinyStoriesV2-GPT4-valid.txt
 
+# wget
 wget https://huggingface.co/datasets/stanford-cs336/owt-sample/resolve/main/owt_train.txt.gz
-gunzip owt_train.txt.gz
 wget https://huggingface.co/datasets/stanford-cs336/owt-sample/resolve/main/owt_valid.txt.gz
+# curl
+curl -L -O https://huggingface.co/datasets/stanford-cs336/owt-sample/resolve/main/owt_train.txt.gz
+curl -L -O https://huggingface.co/datasets/stanford-cs336/owt-sample/resolve/main/owt_valid.txt.gz
+
+gunzip owt_train.txt.gz
 gunzip owt_valid.txt.gz
 
 cd ..
 ```
+
+### Test
+
+1. test tokenize and parallelized tokenize
+
+```shell
+# normal
+uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize" "pretokenize('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'], 4)"
+# parallel
+uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize_parallel" "pretokenize_parallel('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'], 4)"
+```
+
