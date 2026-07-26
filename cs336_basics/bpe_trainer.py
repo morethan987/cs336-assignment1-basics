@@ -1,7 +1,9 @@
 import os
 from collections import Counter
+import pickle
+from datetime import datetime as dt
 
-from cs336_basics.pretokenization import pretokenize, init_word_tokens, pretokenize_parallel
+from cs336_basics.pretokenization import init_word_tokens, pretokenize_parallel
 
 
 class BPE_Trainer:
@@ -11,6 +13,7 @@ class BPE_Trainer:
         self.input_path = input_path
         self.vocab_size = vocab_size  # including initial bytes, special tokens and bpe genetated tokens
         self.num_processes = num_processes
+        self.output_dir = "outputs/bpe_trainer"
 
         self.special_tokens = [s.encode("utf-8") for s in special_tokens]
         self.num_special_tokens = len(special_tokens)
@@ -27,11 +30,39 @@ class BPE_Trainer:
             vocab[256 + idx] = self.special_tokens[idx]
         return vocab
 
+    def pickling(self) -> tuple[str, str]:
+        """
+        Save vocabularies and merges into files with pickle
+        Returns:
+            paths(tuple[str, str]): a tuple represents vocab path and merges path
+        """
+        time_stmp = dt.now().strftime("%Y%m%d_%H%M%S")
+        save_dir = os.path.join(self.output_dir, time_stmp)
+        os.makedirs(save_dir, exist_ok=True)
+        v_path = os.path.join(save_dir, "vocab.pkl")
+        m_path = os.path.join(save_dir, "merges.pkl")
+        with open(v_path, "wb") as f:
+            pickle.dump(self.vocab, f)
+        with open(m_path, "wb") as f:
+            pickle.dump(self.merges, f)
+        return v_path, m_path
+
+    @staticmethod
+    def unpickling(vocab_path: str, merges_path: str) -> tuple[dict[int, bytes], list[tuple[bytes, bytes]]]:
+        """
+        Load vocabularies and merges from files with pickle
+        """
+        with open(vocab_path, "rb") as f:
+            vocab = pickle.load(f)
+        with open(merges_path, "rb") as f:
+            merges = pickle.load(f)
+        return vocab, merges
+
     def train(self) -> None:
         """
         Train BPE model
         """
-        # w_freq = pretokenize(self.input_path, self.special_tokens, self.num_processes)
+        # w_freq = pretokenize(self.input_path, self.special_tokens)
         w_freq = pretokenize_parallel(self.input_path, self.special_tokens, self.num_processes)
         w_tokens = init_word_tokens(w_freq)
         bp_words: dict[tuple[bytes, bytes], set[str]] = {}
