@@ -76,7 +76,7 @@ cd ..
 
 ```shell
 # normal
-uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize" "pretokenize('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'], 4)"
+uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize" "pretokenize('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'])"
 # parallel
 uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize_parallel" "pretokenize_parallel('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'], 4)"
 ```

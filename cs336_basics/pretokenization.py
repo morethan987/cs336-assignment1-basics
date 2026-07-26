@@ -1,12 +1,13 @@
 import os
 import regex as re
+import mmap
+import heapq
 from collections import Counter
-from typing import BinaryIO
 from concurrent.futures import ProcessPoolExecutor
 
 
 def find_chunk_boundaries(
-    file: BinaryIO,
+    file_path: str | os.PathLike[str],
     desired_num_chunks: int,
     special_tokens: list[bytes],
 ) -> list[int]:
@@ -14,53 +15,30 @@ def find_chunk_boundaries(
     Chunk the file into parts that can be counted independently.
     May return fewer chunks if the boundaries end up overlapping.
     """
+    # with open(file_path, "rb") as f:
+    with open(file_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+        # Get total file size in bytes
+        file_size = len(mm)
 
-    # Get total file size in bytes
-    file.seek(0, os.SEEK_END)
-    file_size = file.tell()
-    file.seek(0)
+        # Initial guesses for chunk boundary locations, uniformly spaced
+        # Chunks start on previous index, don't include last index
+        chunk_size = file_size // desired_num_chunks
+        chunk_boundaries = [i * chunk_size for i in range(desired_num_chunks + 1)]
+        chunk_boundaries[-1] = file_size
 
-    chunk_size = file_size // desired_num_chunks
+        # tackel empty
+        if len(special_tokens) == 0:
+            return chunk_boundaries
 
-    # Initial guesses for chunk boundary locations, uniformly spaced
-    # Chunks start on previous index, don't include last index
-    chunk_boundaries = [i * chunk_size for i in range(desired_num_chunks + 1)]
-    chunk_boundaries[-1] = file_size
+        # attach boundaries to the nearest special token
+        for bi in range(1, len(chunk_boundaries) - 1):
+            initial_position = chunk_boundaries[bi]
+            chunk_boundaries[bi] = min(
+                (pos for token in special_tokens if ((pos := mm.find(token, initial_position)) != -1)),
+                default=file_size - 1,
+            )
 
-    # tackel empty
-    if len(special_tokens) == 0:
-        return chunk_boundaries
-
-    base_chunk_size = 4096  # Read ahead by 4k bytes at a time
-    max_special_token_len = max([len(token) for token in special_tokens])
-    mini_chunk_size = base_chunk_size + max_special_token_len  # set overlap
-
-    # attach boundaries to the nearest special token
-    for bi in range(1, len(chunk_boundaries) - 1):
-        initial_position = chunk_boundaries[bi]
-        position = initial_position  # A slide position cursor
-        while True:
-            file.seek(position)
-            mini_chunk = file.read(mini_chunk_size)
-
-            # If EOF, this boundary should be at the end of the file
-            if mini_chunk == b"":
-                chunk_boundaries[bi] = file_size
-                break
-
-            # Find the special token in the mini chunk
-            min_found_at = mini_chunk_size + 1
-            for token in special_tokens:
-                found_at = mini_chunk.find(token)
-                if found_at != -1:
-                    min_found_at = min(min_found_at, found_at)
-            if min_found_at != mini_chunk_size + 1:
-                chunk_boundaries[bi] = position + min_found_at
-                break
-            position += base_chunk_size
-
-    # Make sure all boundaries are unique, but might be fewer than desired_num_chunks
-    return sorted(set(chunk_boundaries))
+        return sorted(set(chunk_boundaries))
 
 
 def split_by_special_tokens(chunk: str, special_tokens: list[bytes]) -> list[str]:
@@ -85,9 +63,7 @@ def init_word_tokens(words: list[str] | Counter[str]) -> dict[str, list[bytes]]:
     return w_tokens
 
 
-def pretokenize(
-    input_path: str | os.PathLike[str], special_tokens: list[bytes], num_processes: int = 4
-) -> Counter[str]:
+def pretokenize(input_path: str | os.PathLike[str], special_tokens: list[bytes]) -> Counter[str]:
     """
     Pretokenize a document with an internal pattern
     Args:
@@ -95,21 +71,7 @@ def pretokenize(
     Returns:
         w_freq(dict[str, int]): word frequnces
     """
-    w_freq = Counter()
-    PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
-    with open(input_path, "rb") as f:
-        boundaries = find_chunk_boundaries(f, num_processes, special_tokens)
-        # TODO: parallelize it
-        for start, end in zip(boundaries[:-1], boundaries[1:]):
-            f.seek(start)
-            chunk = f.read(end - start).decode("utf-8")
-            docs = split_by_special_tokens(chunk, special_tokens)
-            for doc in docs:
-                words = re.findall(PAT, doc)
-                for word in words:
-                    assert isinstance(word, str)
-                    w_freq[word] += 1
-    return w_freq
+    return word_count(input_path, special_tokens, 0, -1)
 
 
 def pretokenize_parallel(
@@ -122,9 +84,8 @@ def pretokenize_parallel(
     Returns:
         w_freq(dict[str, int]): word frequnces
     """
-    with open(input_path, "rb") as f:
-        boundaries = find_chunk_boundaries(f, num_processes, special_tokens)
-    tasks = [(input_path, boundaries[i], boundaries[i + 1], special_tokens) for i in range(len(boundaries) - 1)]
+    boundaries = find_chunk_boundaries(input_path, num_processes, special_tokens)
+    tasks = [(input_path, special_tokens, boundaries[i], boundaries[i + 1]) for i in range(len(boundaries) - 1)]
     with ProcessPoolExecutor(max_workers=num_processes) as ex:
         futs = [ex.submit(word_count, *t) for t in tasks]
         partials = [f.result() for f in futs]
@@ -134,16 +95,38 @@ def pretokenize_parallel(
     return w_freq
 
 
-def word_count(input_path: str | os.PathLike[str], start: int, end: int, special_tokens: list[bytes]) -> Counter[str]:
+def word_count(
+    input_path: str | os.PathLike[str], special_tokens: list[bytes], start: int, end: int = -1
+) -> Counter[str]:
     w_freq = Counter()
-    PAT = r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+"""
-    with open(input_path, "rb") as f:
-        f.seek(start)
-        chunk = f.read(end - start).decode("utf-8")
-        docs = split_by_special_tokens(chunk, special_tokens)
-        for doc in docs:
-            words = re.findall(PAT, doc)
-            for word in words:
-                assert isinstance(word, str)
-                w_freq[word] += 1
+    pat = re.compile(r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
+    with open(input_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
+        # end of file
+        if end < 0:
+            end = len(mm)
+        heap: list[tuple[int, bytes]] = []
+        # heap init
+        for token in special_tokens:
+            pos = mm.find(token, start, end)
+            if pos != -1:
+                heapq.heappush(heap, (pos, token))
+
+        prev = start
+        while heap:
+            pos, token = heapq.heappop(heap)
+            # consume normal text
+            if pos > prev:
+                text = mm[prev:pos].decode("utf-8")
+                w_freq.update(m.group() for m in pat.finditer(text))
+            prev = pos + len(token)
+            # find next token
+            nxt_pos = mm.find(token, prev, end)
+            if nxt_pos != -1:
+                heapq.heappush(heap, (nxt_pos, token))
+
+        # consume text left
+        if prev < end:
+            text = mm[prev:end].decode("utf-8")
+            w_freq.update(m.group() for m in pat.finditer(text))
+
     return w_freq

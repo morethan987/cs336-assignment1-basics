@@ -74,7 +74,7 @@ Time test for normal tokenization and parallelized tokenization. Approximately 6
 
 ```txt
 ╭─ morethan@headlessArch  ~/github/cs336-assignment1-basics
-╰─❯ uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize" "pretokenize('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'], 4)"
+╰─❯ uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize" "pretokenize('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'])"
 1 loop, best of 5: 2.86 sec per loop
 ╭─ morethan@headlessArch  ~/github/cs336-assignment1-basics
 ╰─❯ uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize_parallel" "pretokenize_parallel('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'], 4)"
