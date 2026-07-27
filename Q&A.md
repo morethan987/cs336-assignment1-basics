@@ -50,7 +50,9 @@ UnicodeDecodeError: 'utf-8' codec can't decode byte 0xe7 in position 0: unexpect
 3. Give a two-byte sequence that does not decode to any Unicode character(s).
 Ans: bytes([0xc2, 0x41]), 0xc2 declares two-byte sequence that the following byte should be at lest 0x80. Actually the second byte is 0x41.
 
-4. train_bpe and pass tests
+### train_bpe
+
+1. train_bpe and pass tests
 Ans: success.
 
 ```txt
@@ -80,3 +82,85 @@ Time test for normal tokenization and parallelized tokenization. Approximately 6
 ╰─❯ uv run python -m timeit -s "from cs336_basics.pretokenization import pretokenize_parallel" "pretokenize_parallel('data/TinyStoriesV2-GPT4-valid.txt', [b'<|endoftext|>'], 4)"
 1 loop, best of 5: 1.72 sec per loop
 ```
+
+Final outputs on both datasets:
+
+```txt
+vocabulary list length:  10000
+special tokens:  b'<|endoftext|>'
+first 20 tokens:
+[b' t', b'he', b' a', b' s', b' w', b'nd', b' the', b'ed', b' b', b' to', b' and', b' h', b' f', b'in', b' T', b' wa', b're', b'it', b'ou', b' l']
+last 20 tokens:
+[b' meets', b' marvel', b' Rusty', b' Liza', b' Jet', b'Froggy', b' wrapper', b' Reddy', b' Hops', b' Crusty', b' whiskers', b' nicest', b' improving', b' booth', b' Land', b'Surrender', b'Rocky', b' meadows', b' imaginary', b' bold']
+longest token:
+ accomplishment
+
+vocabulary list length:  32000
+special tokens:  b'<|endoftext|>'
+first 20 tokens:
+[b' t', b' a', b'he', b'in', b're', b' the', b'on', b'er', b' s', b' w', b'at', b' o', b'en', b' c', b'it', b'is', b'an', b'or', b' b', b'es']
+last 20 tokens:
+[b' gradient', b' discredited', b' pg', b' merging', b' disple', b' Hz', b' Aristotle', b'ulls', b'ircraft', b'YD', b'Wik', b' partnering', b' drilled', b'hang', b' pesticide', b' latitude', b' fetish', b' Fruit', b'ivists', b'Disp']
+longest token:
+ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ
+```
+
+### train_bpe_tinystories
+
+1. Train a byte-level BPE tokenizer on the TinyStories dataset, using a maximum vocabulary size of 10,000. Make sure to add the TinyStories <|endoftext|> special token to the vocabulary. Serialize the resulting vocabulary and merges to disk for further inspection. How much time and memory did training take? What is the longest token in the vocabulary? Does it make sense? 
+Ans: Whole traing process takes 216.03s. Memory distribution:
+=== memory by stage (RSS, tree-summed) ===
+  init           n=    1  avg=    29.5 MB  peak=    29.5 MB
+  pretokenize    n= 3100  avg=  1252.0 MB  peak=  2331.5 MB
+  merge_loop     n=   15  avg=   119.1 MB  peak=   124.8 MB
+  OVERALL        peak=  2331.5 MB
+
+longest token is " accomplishment", make sense.
+
+2. Profile your code. What part of the tokenizer training process takes the most time?
+Ans:
+Code profile:
+
+```txt
+         494641868 function calls (494641801 primitive calls) in 412.435 seconds
+
+   Ordered by: cumulative time
+   List reduced from 389 to 25 due to restriction <25>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    1.926    1.926  412.435  412.435 /home/morethan/github/cs336-assignment1-basics/cs336_basics/bpe_trainer.py:62(train)
+        1    0.000    0.000  279.911  279.911 /home/morethan/github/cs336-assignment1-basics/cs336_basics/pretokenization.py:77(pretokenize_parallel)
+        1    0.000    0.000  279.856  279.856 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/concurrent/futures/_base.py:652(__exit__)
+        1    0.000    0.000  279.856  279.856 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/concurrent/futures/process.py:845(shutdown)
+      2/1    0.000    0.000  279.851  279.851 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/threading.py:1059(join)
+      2/1    0.000    0.000  279.851  279.851 {method 'join' of '_thread._ThreadHandle' objects}
+      2/1    0.000    0.000  279.851  279.851 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/threading.py:1001(_bootstrap)
+      2/1    0.000    0.000  279.851  279.851 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/threading.py:1028(_bootstrap_inner)
+        1    0.000    0.000  279.851  279.851 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/concurrent/futures/process.py:330(run)
+        1    0.000    0.000  279.851  279.851 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/concurrent/futures/process.py:549(join_executor_internals)
+        1    0.000    0.000  279.851  279.851 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/concurrent/futures/process.py:553(_join_executor_internals)
+        1    0.000    0.000  279.849  279.849 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/multiprocessing/queues.py:145(join_thread)
+        6    0.000    0.000  279.849   46.641 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/multiprocessing/util.py:276(__call__)
+        1    0.000    0.000  279.848  279.848 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/multiprocessing/queues.py:212(_finalize_join)
+        6    0.000    0.000  279.848   46.641 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/concurrent/futures/process.py:405(wait_result_broken_or_wakeup)
+       17    0.000    0.000  279.811   16.459 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/multiprocessing/connection.py:1160(wait)
+       17    0.000    0.000  279.810   16.459 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/selectors.py:385(select)
+       17  279.810   16.459  279.810   16.459 {method 'poll' of 'select.poll' objects}
+     9751   88.712    0.009  129.920    0.013 {built-in method builtins.max}
+490440103   41.208    0.000   41.208    0.000 /home/morethan/github/cs336-assignment1-basics/cs336_basics/bpe_trainer.py:82(<lambda>)
+  2460252    0.242    0.000    0.242    0.000 {built-in method builtins.len}
+   759789    0.160    0.000    0.160    0.000 {method 'add' of 'set' objects}
+   759779    0.160    0.000    0.160    0.000 {method 'setdefault' of 'dict' objects}
+        1    0.097    0.097    0.106    0.106 /home/morethan/github/cs336-assignment1-basics/cs336_basics/pretokenization.py:52(init_word_tokens)
+        4    0.043    0.011    0.053    0.013 /home/morethan/.local/share/uv/python/cpython-3.13.14-linux-x86_64-gnu/lib/python3.13/collections/__init__.py:928(__iadd__)
+```
+
+Pre-tokenization: 279.81s; Merging: 129.92s, find the most freqent pair is the bottleneck.
+
+### train_bpe_expts_owt
+
+1. Train a byte-level BPE tokenizer on the OpenWebText dataset, using a maximum vocabulary size of 32,000. Serialize the resulting vocabulary and merges to disk for further inspection. What is the longest token in the vocabulary? Does it make sense?
+Ans: longest token is "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ". It may cause by none-utf8 encoded text in web pages.
+
+2. Compare and contrast the tokenizer that you get training on TinyStories versus OpenWebText.
+Ans: some early statge tokens are nearly same since both dataset is English corpus. OpenWebText contains some dirty text which leads to some strange token such as "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ". Tokens generated in final stage reflect the topic of corpus.
