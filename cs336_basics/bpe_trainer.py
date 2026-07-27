@@ -4,6 +4,7 @@ import pickle
 from datetime import datetime as dt
 
 from cs336_basics.pretokenization import init_word_tokens, pretokenize_parallel
+from scripts.mem_tracker import stage
 
 
 class BPE_Trainer:
@@ -63,7 +64,9 @@ class BPE_Trainer:
         Train BPE model
         """
         # w_freq = pretokenize(self.input_path, self.special_tokens)
+        stage("pretokenize")
         w_freq = pretokenize_parallel(self.input_path, self.special_tokens, self.num_processes)
+        stage("build_pairs")
         w_tokens = init_word_tokens(w_freq)
         bp_words: dict[tuple[bytes, bytes], set[str]] = {}
         bp_counter: Counter[tuple[bytes, bytes]] = Counter()
@@ -74,6 +77,7 @@ class BPE_Trainer:
                 bp_words.setdefault(byte_pair, set()).add(word)
 
         # for loop to merge bytes
+        stage("merge_loop")
         for _ in range(self.vocab_size - len(self.vocab)):
             bp_merge = max(bp_counter.items(), key=lambda kv: (kv[1], kv[0]))[0]
             bp_new = bp_merge[0] + bp_merge[1]
