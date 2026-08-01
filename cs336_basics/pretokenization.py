@@ -1,9 +1,10 @@
-import os
-import regex as re
-import mmap
 import heapq
+import mmap
+import os
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
+
+import regex as re
 
 
 def find_chunk_boundaries(

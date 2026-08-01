@@ -1,7 +1,8 @@
 import os
-from collections import Counter
 import pickle
+from collections import Counter
 from datetime import datetime as dt
+from datetime import timedelta, timezone
 
 from cs336_basics.pretokenization import init_word_tokens, pretokenize_parallel
 
@@ -36,7 +37,7 @@ class BPE_Trainer:
         Returns:
             paths(tuple[str, str]): a tuple represents vocab path and merges path
         """
-        time_stmp = dt.now().strftime("%Y%m%d_%H%M%S")
+        time_stmp = dt.now(timezone(timedelta(hours=8))).strftime("%Y%m%d_%H%M%S")
         save_dir = os.path.join(self.output_dir, time_stmp)
         os.makedirs(save_dir, exist_ok=True)
         v_path = os.path.join(save_dir, "vocab.pkl")
