@@ -3,6 +3,7 @@ import pickle
 from collections import Counter
 from datetime import datetime as dt
 from datetime import timedelta, timezone
+from itertools import pairwise
 
 from cs336_basics.pretokenization import init_word_tokens, pretokenize_parallel
 
@@ -70,7 +71,7 @@ class BPE_Trainer:
         bp_counter: Counter[tuple[bytes, bytes]] = Counter()
         for word in w_freq:
             tokens = w_tokens[word]
-            for byte_pair in zip(tokens[:-1], tokens[1:]):
+            for byte_pair in pairwise(tokens):
                 bp_counter[byte_pair] += w_freq[word]
                 bp_words.setdefault(byte_pair, set()).add(word)
 

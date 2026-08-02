@@ -6,6 +6,8 @@ from concurrent.futures import ProcessPoolExecutor
 
 import regex as re
 
+PAT = re.compile(r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
+
 
 def find_chunk_boundaries(
     file_path: str | os.PathLike[str],
@@ -40,14 +42,6 @@ def find_chunk_boundaries(
             )
 
         return sorted(set(chunk_boundaries))
-
-
-def split_by_special_tokens(chunk: str, special_tokens: list[bytes]) -> list[str]:
-    if len(special_tokens) == 0:
-        return [chunk]
-    special_tokens_str = [b.decode("utf-8") for b in special_tokens]
-    split_pat = "|".join(re.escape(token) for token in special_tokens_str)
-    return re.split(split_pat, chunk)
 
 
 def init_word_tokens(words: list[str] | Counter[str]) -> dict[str, list[bytes]]:
@@ -100,7 +94,6 @@ def word_count(
     input_path: str | os.PathLike[str], special_tokens: list[bytes], start: int, end: int = -1
 ) -> Counter[str]:
     w_freq = Counter()
-    pat = re.compile(r"""'(?:[sdmt]|ll|ve|re)| ?\p{L}+| ?\p{N}+| ?[^\s\p{L}\p{N}]+|\s+(?!\S)|\s+""")
     with open(input_path, "rb") as f, mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ) as mm:
         # end of file
         if end < 0:
@@ -118,7 +111,7 @@ def word_count(
             # consume normal text
             if pos > prev:
                 text = mm[prev:pos].decode("utf-8")
-                w_freq.update(m.group() for m in pat.finditer(text))
+                w_freq.update(m.group() for m in PAT.finditer(text))
             prev = pos + len(token)
             # find next token
             nxt_pos = mm.find(token, prev, end)
@@ -128,6 +121,6 @@ def word_count(
         # consume text left
         if prev < end:
             text = mm[prev:end].decode("utf-8")
-            w_freq.update(m.group() for m in pat.finditer(text))
+            w_freq.update(m.group() for m in PAT.finditer(text))
 
     return w_freq
