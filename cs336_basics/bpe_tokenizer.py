@@ -17,6 +17,7 @@ class BPE_Tokenizer:
             (self.vocab_rev[tk1], self.vocab_rev[tk2]): self.vocab_rev[tk1 + tk2] for tk1, tk2 in merges
         }
         self.special_tokens = special_tokens
+        self.memo: dict[str, list[int]] = {}
 
     @classmethod
     def from_files(
@@ -72,11 +73,10 @@ class BPE_Tokenizer:
         Encode an input text without special tokens into a sequence of token IDs.
         """
         res: list[int] = []
-        memo: dict[str, list[int]] = {}
         for match in PAT.finditer(chunk):
             word = match.group()
-            if word in memo:
-                res += memo[word]
+            if word in self.memo:
+                res += self.memo[word]
                 continue
 
             tks_idx = [self.vocab_rev[bytes([idx])] for idx in word.encode("utf-8")]
@@ -97,7 +97,7 @@ class BPE_Tokenizer:
                     else:
                         i += 1
 
-            memo[word] = tks_idx
+            self.memo[word] = tks_idx
             res += tks_idx
 
         return res
