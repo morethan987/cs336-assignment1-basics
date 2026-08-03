@@ -11,12 +11,12 @@ class BPE_Tokenizer:
     def __init__(
         self, vocab: dict[int, bytes], merges: list[tuple[bytes, bytes]], special_tokens: list[str] | None = None
     ) -> None:
-        self.vocab = vocab
-        self.merges = merges
-        self.merge_ranks = {bp: idx for idx, bp in enumerate(merges)}
-        self.merge_ranks_rev = {idx: bp for idx, bp in enumerate(merges)}
-        self.special_tokens = special_tokens
+        self.vocab = vocab  # should be the same order with merges
         self.vocab_rev = {v: k for k, v in vocab.items()}
+        self.merge_ranks = {
+            (self.vocab_rev[tk1], self.vocab_rev[tk2]): self.vocab_rev[tk1 + tk2] for tk1, tk2 in merges
+        }
+        self.special_tokens = special_tokens
 
     @classmethod
     def from_files(
@@ -72,25 +72,34 @@ class BPE_Tokenizer:
         Encode an input text without special tokens into a sequence of token IDs.
         """
         res: list[int] = []
+        memo: dict[str, list[int]] = {}
         for match in PAT.finditer(chunk):
             word = match.group()
-            tks = [bytes([idx]) for idx in word.encode("utf-8")]
+            if word in memo:
+                res += memo[word]
+                continue
+
+            tks_idx = [self.vocab_rev[bytes([idx])] for idx in word.encode("utf-8")]
             while True:
-                mrg_idx = len(self.merge_ranks)
-                for pair in pairwise(tks):
-                    if pair in self.merge_ranks:
-                        mrg_idx = min(mrg_idx, self.merge_ranks[pair])
-                if mrg_idx == len(self.merge_ranks):
+                mrg_idx = len(self.vocab)
+                mrg: tuple[int, int] = (-1, -1)
+                for pair in pairwise(tks_idx):
+                    if pair in self.merge_ranks and self.merge_ranks[pair] < mrg_idx:
+                        mrg_idx = self.merge_ranks[pair]
+                        mrg = pair
+                if mrg_idx == len(self.vocab):
                     break
-                mrg = self.merge_ranks_rev[mrg_idx]
+
                 i = 0
-                while i < len(tks) - 1:
-                    if tks[i] == mrg[0] and tks[i + 1] == mrg[1]:
-                        tks[i : i + 2] = [tks[i] + tks[i + 1]]
+                while i < len(tks_idx) - 1:
+                    if tks_idx[i] == mrg[0] and tks_idx[i + 1] == mrg[1]:
+                        tks_idx[i : i + 2] = [mrg_idx]
                     else:
                         i += 1
-            for tk in tks:
-                res.append(self.vocab_rev[tk])
+
+            memo[word] = tks_idx
+            res += tks_idx
+
         return res
 
     def encode_iterable(self, iterable: Iterable[str]) -> Iterator[int]:
