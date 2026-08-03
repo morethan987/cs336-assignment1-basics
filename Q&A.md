@@ -164,3 +164,95 @@ Ans: longest token is "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ�
 
 2. Compare and contrast the tokenizer that you get training on TinyStories versus OpenWebText.
 Ans: some early statge tokens are nearly same since both dataset is English corpus. OpenWebText contains some dirty text which leads to some strange token such as "ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ". Tokens generated in final stage reflect the topic of corpus.
+
+### tokenizer
+Ans: success.
+
+```txt
+╭─ morethan@headlessArch  ~/github/cs336-assignment1-basics
+╰─❯ uv run pytest tests/test_tokenizer.py
+=============================================================================== test session starts ================================================================================
+platform linux -- Python 3.13.14, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: jaxtyping-0.3.9, timeout-2.4.0
+collected 25 items
+
+tests/test_tokenizer.py::test_roundtrip_empty PASSED
+tests/test_tokenizer.py::test_empty_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_roundtrip_single_character PASSED
+tests/test_tokenizer.py::test_single_character_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_roundtrip_single_unicode_character PASSED
+tests/test_tokenizer.py::test_single_unicode_character_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_roundtrip_ascii_string PASSED
+tests/test_tokenizer.py::test_ascii_string_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_roundtrip_unicode_string PASSED
+tests/test_tokenizer.py::test_unicode_string_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_roundtrip_unicode_string_with_special_tokens PASSED
+tests/test_tokenizer.py::test_unicode_string_with_special_tokens_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_overlapping_special_tokens PASSED
+tests/test_tokenizer.py::test_address_roundtrip PASSED
+tests/test_tokenizer.py::test_address_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_german_roundtrip PASSED
+tests/test_tokenizer.py::test_german_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_tinystories_sample_roundtrip PASSED
+tests/test_tokenizer.py::test_tinystories_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_encode_special_token_trailing_newlines PASSED
+tests/test_tokenizer.py::test_encode_special_token_double_newline_non_whitespace PASSED
+tests/test_tokenizer.py::test_encode_iterable_tinystories_sample_roundtrip PASSED
+tests/test_tokenizer.py::test_encode_iterable_tinystories_matches_tiktoken PASSED
+tests/test_tokenizer.py::test_encode_iterable_memory_usage PASSED
+tests/test_tokenizer.py::test_encode_memory_usage XFAIL (Tokenizer.encode is expected to take more memory than allotted (1MB).)
+
+========================================================================== 24 passed, 1 xfailed in 8.68s ===========================================================================
+```
+
+### tokenizer_experiments
+
+1. Sample 10 documents from TinyStories and OpenWebText. Using your previously-trained TinyStories and OpenWebText tokenizers (10K and 32K vocabulary size, respectively), encode these sampled documents into integer IDs. What is each tokenizer’s compression ratio (bytes/token)?
+Ans: TinyStory tokenizer is 4.171, OWT tokenizer is 4.478.
+
+```txt
+TinyStory compression ratio results:
+['4.130', '4.439', '4.110', '4.192', '4.028', '4.305', '4.188', '4.126', '3.863', '4.327']
+Average: 4.171
+
+OpenWebText compression ratio results:
+['4.781', '5.036', '4.002', '4.339', '4.642', '4.394', '4.421', '4.447', '4.134', '4.589']
+Average: 4.478
+
+```
+
+2. What happens if you tokenize your OpenWebText sample with the TinyStories tokenizer? Compare the compression ratio and/or qualitatively describe what happens.
+Ans: Compression ratio is 3.370, relatively drops 19.53%. OWT document encoded with TinyStory tokenizer contains some tivial pieces such as 'W' 'om' 'en', which should be a single token 'Women', leading to a lower compression ratio.
+
+```txt
+Compression ratio results of OpenWebText encoded with TinyStory tokenizer:
+['3.736', '2.906', '3.410', '3.550', '3.665', '3.642', '3.075', '2.856', '3.543', '3.001']
+Average: 3.338
+
+OpenWebText compression ratio results:
+['5.261', '4.025', '4.181', '5.272', '4.263', '4.228', '3.669', '4.199', '4.456', '4.599']
+Average: 4.415
+Relatively drops:0.2439
+
+One sample output:
+Encoding results of OpenWebText with TinyStory tokenizer:
+['W', 'om', 'en', ' can', ' live', ' at', ' the', ' res', 'idence', ' for']
+
+Encoding results of OpenWebText with OpenWebText tokenizer:
+['Women', ' can', ' live', ' at', ' the', ' residence', ' for', ' up', ' to', ' five']
+```
+
+3. Estimate the throughput of your tokenizer (e.g., in bytes/second). How long would it take to tokenize the Pile dataset (825GB of text)?
+Ans: The throughput is 1.47 MB/s for TinyStory tokenizer, 1.35 MB/s for OWT tokenizer. Tokenizing Pile dataset need 159.64 hours.
+
+```txt
+Dataset                MB/s       tokens/s    bytes/token
+------------------------------------------------------------
+TinyStories            1.47        374,023          4.117
+OpenWebText            1.35        324,726          4.367
+```
+
+4. Using your TinyStories and OpenWebText tokenizers, encode the respective training and development datasets into a sequence of integer token IDs. We’ll use this later to train our language model. We recommend serializing the token IDs as a NumPy array of datatype uint16. Why is uint16 an appropriate choice?
+Ans: There is no negative IDs so uint16 is enough which has the same poritive range with int32.
