@@ -1,3 +1,4 @@
+import heapq
 import os
 import pickle
 from collections import Counter
@@ -6,6 +7,17 @@ from datetime import timedelta, timezone
 from itertools import pairwise
 
 from cs336_basics.pretokenization import init_word_tokens, pretokenize_parallel
+
+
+class Reverse_Byte_Pair:
+    def __init__(self, bp: tuple[bytes, bytes]) -> None:
+        self.byte_pair = bp
+
+    def __lt__(self, other: "Reverse_Byte_Pair") -> bool:
+        return self.byte_pair > other.byte_pair
+
+    def get(self) -> tuple[bytes, bytes]:
+        return self.byte_pair
 
 
 class BPE_Trainer:
@@ -68,19 +80,45 @@ class BPE_Trainer:
         w_freq = pretokenize_parallel(self.input_path, self.special_tokens, self.num_processes)
         w_tokens = init_word_tokens(w_freq)
         bp_words: dict[tuple[bytes, bytes], set[str]] = {}
-        bp_counter: Counter[tuple[bytes, bytes]] = Counter()
+        bp_counter: Counter[tuple[bytes, bytes]] = Counter()  # store true coount data
+        bp_heap: list[tuple[int, Reverse_Byte_Pair]] = []  # to get most freqent byte pair
         for word in w_freq:
             tokens = w_tokens[word]
             for byte_pair in pairwise(tokens):
                 bp_counter[byte_pair] += w_freq[word]
                 bp_words.setdefault(byte_pair, set()).add(word)
+        bp_heap = [(-freq, Reverse_Byte_Pair(pair)) for pair, freq in bp_counter.items()]
+        heapq.heapify(bp_heap)
 
         # for loop to merge bytes
         for _ in range(self.vocab_size - len(self.vocab)):
-            bp_merge = max(bp_counter.items(), key=lambda kv: (kv[1], kv[0]))[0]
-            bp_new = bp_merge[0] + bp_merge[1]
+            bp_merge: tuple[bytes, bytes] | None = None
+            while bp_heap:  # lazy delete
+                neg_freq, re_candidate = heapq.heappop(bp_heap)
+                candidate = re_candidate.get()
+                if candidate in bp_counter and -neg_freq == bp_counter[candidate]:
+                    bp_merge = candidate
+                    break
+            assert bp_merge is not None
+
+            tk_new = bp_merge[0] + bp_merge[1]
             self.merges.append(bp_merge)
-            self.vocab[len(self.vocab)] = bp_new
+            self.vocab[len(self.vocab)] = tk_new
+
+            def _cnt_rm(key: tuple[bytes, bytes], v: int):
+                if key not in bp_counter:
+                    return
+                bp_counter[key] -= v
+                if bp_counter[key] <= 0:
+                    bp_counter.pop(key)
+                    bp_words.pop(key)
+                    return
+                heapq.heappush(bp_heap, (-bp_counter[key], Reverse_Byte_Pair(key)))
+
+            def _cnt_add(key: tuple[bytes, bytes], word: str):
+                bp_counter[key] += w_freq[word]
+                heapq.heappush(bp_heap, (-bp_counter[key], Reverse_Byte_Pair(key)))
+                bp_words.setdefault(key, set()).add(word)
 
             for word in bp_words[bp_merge]:
                 tks = w_tokens[word]
@@ -89,15 +127,13 @@ class BPE_Trainer:
                     rp = lp + 1  # right pointer, always exist
                     if tks[lp] == bp_merge[0] and tks[rp] == bp_merge[1]:
                         if lp != 0:  # check left is valid
-                            bp_counter[(tks[lp - 1], bp_merge[0])] -= w_freq[word]
-                            bp_counter[(tks[lp - 1], bp_new)] += w_freq[word]
-                            bp_words.setdefault((tks[lp - 1], bp_new), set()).add(word)
+                            _cnt_rm((tks[lp - 1], bp_merge[0]), w_freq[word])
+                            _cnt_add((tks[lp - 1], tk_new), word)
                         if rp != len(tks) - 1:  # check right is valid
-                            bp_counter[(bp_merge[1], tks[rp + 1])] -= w_freq[word]
-                            bp_counter[(bp_new, tks[rp + 1])] += w_freq[word]
-                            bp_words.setdefault((bp_new, tks[rp + 1]), set()).add(word)
+                            _cnt_rm((bp_merge[1], tks[rp + 1]), w_freq[word])
+                            _cnt_add((tk_new, tks[rp + 1]), word)
                         tks[lp : rp + 1] = [tks[lp] + tks[rp]]
-                        bp_counter[bp_merge] -= w_freq[word]
+                        _cnt_rm(bp_merge, w_freq[word])
                     lp += 1
 
     def ans_for_adapter(self) -> tuple[dict[int, bytes], list[tuple[bytes, bytes]]]:
