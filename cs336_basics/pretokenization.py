@@ -2,7 +2,7 @@ import heapq
 import mmap
 import os
 from collections import Counter
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import regex as re
 
@@ -81,12 +81,11 @@ def pretokenize_parallel(
     """
     boundaries = find_chunk_boundaries(input_path, num_processes, special_tokens)
     tasks = [(input_path, special_tokens, boundaries[i], boundaries[i + 1]) for i in range(len(boundaries) - 1)]
+    w_freq = Counter()
     with ProcessPoolExecutor(max_workers=num_processes) as ex:
         futs = [ex.submit(word_count, *t) for t in tasks]
-        partials = [f.result() for f in futs]
-    w_freq = Counter()
-    for p in partials:
-        w_freq += p
+        for fut in as_completed(futs):
+            w_freq.update(fut.result())
     return w_freq
 
 
