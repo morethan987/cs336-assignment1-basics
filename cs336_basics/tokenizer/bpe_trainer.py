@@ -6,7 +6,7 @@ from datetime import datetime as dt
 from datetime import timedelta, timezone
 from itertools import pairwise
 
-from cs336_basics.pretokenization import init_word_tokens, pretokenize_parallel
+from .pretokenization import init_word_tokens, pretokenize_parallel
 
 
 class Reverse_Byte_Pair:

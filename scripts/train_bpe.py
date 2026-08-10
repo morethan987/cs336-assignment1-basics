@@ -1,4 +1,4 @@
-from cs336_basics.bpe_trainer import BPE_Trainer
+from cs336_basics.tokenizer import BPE_Trainer
 
 
 def train_tinystories() -> None:
@@ -48,7 +48,7 @@ def visualize(v_path: str, m_path: str) -> None:
 if __name__ == "__main__":
     train_tinystories()
     # train_expts_owt()
-    
+
     # v_path = "outputs/bpe_trainer/20260725_204945/vocab.pkl"
     # m_path = "outputs/bpe_trainer/20260725_204945/merges.pkl"
     # visualize(v_path, m_path)

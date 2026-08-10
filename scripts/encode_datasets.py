@@ -5,7 +5,7 @@ from datetime import timedelta, timezone
 
 import numpy as np
 
-from cs336_basics.bpe_tokenizer import BPE_Tokenizer
+from cs336_basics.tokenizer import BPE_Tokenizer
 
 output_dir = "outputs/bpe_tokenizer"
 

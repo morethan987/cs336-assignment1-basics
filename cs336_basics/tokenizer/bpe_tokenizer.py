@@ -4,7 +4,7 @@ import pickle
 from collections.abc import Iterable, Iterator
 from itertools import pairwise
 
-from cs336_basics.pretokenization import PAT
+from .pretokenization import PAT
 
 
 class BPE_Tokenizer:
