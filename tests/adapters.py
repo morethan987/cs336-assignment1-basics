@@ -9,6 +9,7 @@ import torch
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
 
+from cs336_basics.layers import Linear
 from cs336_basics.tokenizer import BPE_Tokenizer, BPE_Trainer
 
 
@@ -30,8 +31,9 @@ def run_linear(
     Returns:
         Float[Tensor, "... d_out"]: The transformed output of your linear module.
     """
-
-    raise NotImplementedError
+    linear = Linear(d_in, d_out)
+    linear.load_state_dict({"weight": weights})
+    return linear.forward(in_features)
 
 
 def run_embedding(

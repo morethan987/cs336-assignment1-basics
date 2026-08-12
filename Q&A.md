@@ -256,3 +256,19 @@ OpenWebText            1.35        324,726          4.367
 
 4. Using your TinyStories and OpenWebText tokenizers, encode the respective training and development datasets into a sequence of integer token IDs. We’ll use this later to train our language model. We recommend serializing the token IDs as a NumPy array of datatype uint16. Why is uint16 an appropriate choice?
 Ans: There is no negative IDs so uint16 is enough which has the same poritive range with int32.
+
+### linear
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: jaxtyping-0.3.9, timeout-2.4.0
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_model.py::test_linear PASSED
+
+======================= 1 passed, 47 deselected in 0.98s =======================
+```
