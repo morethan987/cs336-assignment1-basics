@@ -289,3 +289,20 @@ tests/test_model.py::test_embedding PASSED
 
 ======================= 1 passed, 47 deselected in 0.99s =======================
 ```
+
+### rmsnorm
+
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.0.2, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: jaxtyping-0.3.9, timeout-2.4.0
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_model.py::test_rmsnorm PASSED
+
+======================= 1 passed, 47 deselected in 1.00s =======================
+```
