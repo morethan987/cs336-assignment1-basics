@@ -323,3 +323,20 @@ tests/test_model.py::test_swiglu PASSED
 
 ======================= 1 passed, 47 deselected in 1.03s =======================
 ```
+
+### rope
+
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_model.py::test_rope PASSED
+
+======================= 1 passed, 47 deselected in 1.06s =======================
+```
