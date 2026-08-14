@@ -42,6 +42,10 @@ log_cli = true
 log_cli_level = "WARNING"
 addopts = "-s"
 
+[tool.basedpyright]
+typeCheckingMode = "standard"
+reportPrivateImportUsage = "none"
+
 [tool.ruff]
 line-length = 120
 
