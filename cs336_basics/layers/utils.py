@@ -1,3 +1,4 @@
+import einx
 import torch
 
 
@@ -6,3 +7,13 @@ def softmax(x: torch.Tensor, dim: int) -> torch.Tensor:
     exp_x = torch.exp(x - mx)
     sum_x = torch.sum(exp_x, dim=dim, keepdim=True)
     return exp_x / sum_x
+
+
+def scaled_dot_product_attention(
+    Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, mask: torch.Tensor | None = None
+) -> torch.Tensor:
+    d_k = torch.tensor(Q.shape[-1])
+    scaled_dot = torch.multiply(torch.rsqrt(d_k), einx.dot("... n [d_k], ... m [d_k] -> ... n m", Q, K))
+    if mask is not None:
+        scaled_dot = scaled_dot.masked_fill(~mask, float("-inf"))
+    return einx.dot("... n [m], ... [m] d_v -> ... n d_v", softmax(scaled_dot, -1), V)

@@ -357,3 +357,35 @@ tests/test_nn_utils.py::test_softmax_matches_pytorch PASSED
 
 ======================= 1 passed, 47 deselected in 0.85s =======================
 ```
+
+### scaled_dot_product_attention
+
+Ans: success.
+
+```txt
+uv run pytest -k test_scaled_dot_product_attention
+
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_model.py::test_scaled_dot_product_attention PASSED
+
+======================= 1 passed, 47 deselected in 1.02s =======================
+
+uv run pytest -k test_4d_scaled_dot_product_attention
+
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_model.py::test_4d_scaled_dot_product_attention PASSED
+
+======================= 1 passed, 47 deselected in 1.01s =======================
+```
