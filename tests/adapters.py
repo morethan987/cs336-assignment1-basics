@@ -33,7 +33,7 @@ def run_linear(
     """
     linear = Linear(d_in, d_out)
     linear.load_state_dict({"weight": weights})
-    return linear.forward(in_features)
+    return linear(in_features)
 
 
 def run_embedding(
@@ -56,7 +56,7 @@ def run_embedding(
     """
     emb = Embedding(vocab_size, d_model)
     emb.load_state_dict({"weight": weights})
-    return emb.forward(token_ids)
+    return emb(token_ids)
 
 
 def run_swiglu(
@@ -90,7 +90,7 @@ def run_swiglu(
     # swiglu.w3.weight.data = w3_weight
     swiglu = SwiGLU(d_model, d_ff)
     swiglu.load_state_dict({"w1.weight": w1_weight, "w2.weight": w2_weight, "w3.weight": w3_weight})
-    return swiglu.forward(in_features)
+    return swiglu(in_features)
 
 
 def run_scaled_dot_product_attention(
@@ -208,7 +208,7 @@ def run_rope(
         Float[Tensor, " ... sequence_length d_k"]: Tensor with RoPEd input.
     """
     rope = RoPE(theta, d_k, max_seq_len)
-    return rope.forward(in_query_or_key, token_positions)
+    return rope(in_query_or_key, token_positions)
 
 
 def run_transformer_block(
@@ -388,7 +388,7 @@ def run_rmsnorm(
     """
     rms = RMSNorm(d_model, eps)
     rms.load_state_dict({"weight": weights})
-    return rms.forward(in_features)
+    return rms(in_features)
 
 
 def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
