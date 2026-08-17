@@ -13,6 +13,7 @@ def scaled_dot_product_attention(
     Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, mask: torch.Tensor | None = None
 ) -> torch.Tensor:
     d_k = torch.tensor(Q.shape[-1])
+    # n and m all respresent seq_len, only to tag matrix shape: (n, m) or (m, n)
     scaled_dot = torch.multiply(torch.rsqrt(d_k), einx.dot("... n [d_k], ... m [d_k] -> ... n m", Q, K))
     if mask is not None:
         scaled_dot = scaled_dot.masked_fill(~mask, float("-inf"))
