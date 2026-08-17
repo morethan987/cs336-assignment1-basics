@@ -1,3 +1,5 @@
+from functools import cache
+
 import einx
 import torch
 from torch import nn
@@ -53,3 +55,14 @@ class RoPE(nn.Module):
         x_even, x_odd = torch.unbind(x_reshaped, -1)
         x_rev = einx.id("... num_pairs, ... num_pairs -> ... num_pairs (1 + 1)", -x_odd, x_even)
         return einx.id("... num_pairs k -> ... (num_pairs k)", x_reshaped * coss + x_rev * sins, k=2)
+
+
+@cache
+def get_rope(
+    theta: float,
+    d_k: int,
+    max_seq_len: int,
+    device: torch.device | None = None,
+    dtype: torch.dtype | None = None,
+) -> RoPE:
+    return RoPE(theta, d_k, max_seq_len, device, dtype)
