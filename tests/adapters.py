@@ -8,6 +8,7 @@ import numpy.typing as npt
 import torch
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
+from torch._C import InferredType
 
 from cs336_basics.layers import (
     Embedding,
@@ -16,6 +17,7 @@ from cs336_basics.layers import (
     RMSNorm,
     RoPE,
     SwiGLU,
+    TransformerBlock,
     scaled_dot_product_attention,
     softmax,
 )
@@ -308,7 +310,23 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    raise NotImplementedError
+    transformer_block = TransformerBlock(d_model, num_heads, d_ff, theta, max_seq_len)
+    transformer_block.load_state_dict(
+        {
+            "rms1.weight": weights["ln1.weight"],
+            "attn.q.weight": weights["attn.q_proj.weight"],
+            "attn.k.weight": weights["attn.k_proj.weight"],
+            "attn.v.weight": weights["attn.v_proj.weight"],
+            "attn.o.weight": weights["attn.output_proj.weight"],
+            "rms2.weight": weights["ln2.weight"],
+            "ffn.w1.weight": weights["ffn.w1.weight"],
+            "ffn.w2.weight": weights["ffn.w2.weight"],
+            "ffn.w3.weight": weights["ffn.w3.weight"],
+        }
+    )
+    seq_len = in_features.shape[-2]
+    token_positions = torch.arange(0, seq_len, dtype=torch.int)
+    return transformer_block(in_features, token_positions)
 
 
 def run_transformer_lm(

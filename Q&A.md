@@ -407,3 +407,20 @@ tests/test_model.py::test_multihead_self_attention_with_rope PASSED
 
 ======================= 2 passed, 46 deselected in 1.40s =======================
 ```
+
+### transformer_block
+
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_model.py::test_transformer_block PASSED
+
+======================= 1 passed, 47 deselected in 1.49s =======================
+```
