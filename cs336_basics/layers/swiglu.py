@@ -11,7 +11,7 @@ class SwiGLU(nn.Module):
     State dict keys: w1.weight, w2.weight, w3.weight
     Args:
         d_model (int): Hidden dimension of the model
-        eps (float = 1e-5): Epsilon value for numerical stability
+        d_ff (int | None = None): Dimensionality of the position-wise feed-forward inner layer
         device (torch.device | None = None): Device to store the parameters on
         dtype (torch.dtype | None=None): Data type of the parameters
     """
