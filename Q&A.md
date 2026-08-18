@@ -424,3 +424,21 @@ tests/test_model.py::test_transformer_block PASSED
 
 ======================= 1 passed, 47 deselected in 1.49s =======================
 ```
+
+### transformer_lm
+
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 46 deselected / 2 selected
+
+tests/test_model.py::test_transformer_lm PASSED
+tests/test_model.py::test_transformer_lm_truncated_input PASSED
+
+======================= 2 passed, 46 deselected in 2.14s =======================
+```

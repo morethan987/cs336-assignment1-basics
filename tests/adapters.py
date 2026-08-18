@@ -17,6 +17,7 @@ from cs336_basics.layers import (
     RoPE,
     SwiGLU,
     TransformerBlock,
+    TransformerLM,
     scaled_dot_product_attention,
     softmax,
 )
@@ -407,7 +408,32 @@ def run_transformer_lm(
         Float[Tensor, "batch_size sequence_length vocab_size"]: Tensor with the predicted unnormalized
         next-word distribution for each token.
     """
-    raise NotImplementedError
+    transformer_lm = TransformerLM(vocab_size, context_length, num_layers, d_model, num_heads, d_ff, rope_theta)
+    seq_len = in_indices.shape[-1]
+    token_positions = torch.arange(0, seq_len, dtype=torch.int)
+    transformer_lm.load_state_dict(
+        {
+            "embed.weight": weights["token_embeddings.weight"],
+            "output_rms.weight": weights["ln_final.weight"],
+            "output_linear.weight": weights["lm_head.weight"],
+        }
+        | {
+            key: value
+            for i in range(num_layers)
+            for key, value in {
+                f"transformers.{i}.rms1.weight": weights[f"layers.{i}.ln1.weight"],
+                f"transformers.{i}.attn.q.weight": weights[f"layers.{i}.attn.q_proj.weight"],
+                f"transformers.{i}.attn.k.weight": weights[f"layers.{i}.attn.k_proj.weight"],
+                f"transformers.{i}.attn.v.weight": weights[f"layers.{i}.attn.v_proj.weight"],
+                f"transformers.{i}.attn.o.weight": weights[f"layers.{i}.attn.output_proj.weight"],
+                f"transformers.{i}.rms2.weight": weights[f"layers.{i}.ln2.weight"],
+                f"transformers.{i}.ffn.w1.weight": weights[f"layers.{i}.ffn.w1.weight"],
+                f"transformers.{i}.ffn.w2.weight": weights[f"layers.{i}.ffn.w2.weight"],
+                f"transformers.{i}.ffn.w3.weight": weights[f"layers.{i}.ffn.w3.weight"],
+            }.items()
+        }
+    )
+    return transformer_lm(in_indices, token_positions)
 
 
 def run_rmsnorm(
