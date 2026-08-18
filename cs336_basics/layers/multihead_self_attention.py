@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 from .linear import Linear
-from .rope import get_rope
+from .rope import RoPE
 from .utils import scaled_dot_product_attention
 
 
@@ -30,19 +30,24 @@ class MultiheadSelfAttention(nn.Module):
         dtype: torch.dtype | None = None,
     ) -> None:
         super().__init__()
+        assert d_model % num_heads == 0, "Token embedding dim should be the multiple of num_heads"
+        self.d_kv = d_model // num_heads  # standard default value
         self.d_model = d_model
         self.num_heads = num_heads
         self.theta = theta
         self.max_seq_len = max_seq_len
-        self.should_rope = False
-        if self.theta and self.max_seq_len:
-            self.should_rope = True
-        if (self.theta and not self.max_seq_len) or (not self.theta and self.max_seq_len):
-            raise ValueError
-
-        assert d_model % num_heads == 0, "Token embedding dim should be the multiple of num_heads"
-        self.d_kv = d_model // num_heads  # standard default value
         self.factory_kwargs = {"device": device, "dtype": dtype}
+
+        self.rope = None
+        if self.theta and self.max_seq_len:
+            self.rope = RoPE(self.theta, self.d_kv, self.max_seq_len, **self.factory_kwargs)
+        if (self.theta and not self.max_seq_len) or (not self.theta and self.max_seq_len):
+            raise ValueError(
+                f"theta or max_seq_len should not be None."
+                f"current theta:{self.theta}"
+                f"current max_seq_len: {self.max_seq_len}"
+            )
+
         self.q = Linear(self.d_model, self.d_model, **self.factory_kwargs)
         self.k = Linear(self.d_model, self.d_model, **self.factory_kwargs)
         self.v = Linear(self.d_model, self.d_model, **self.factory_kwargs)
@@ -57,11 +62,11 @@ class MultiheadSelfAttention(nn.Module):
         K = einx.id("... seq_len (h d_kv) -> ... h seq_len d_kv", K, h=self.num_heads)
         V = einx.id("... seq_len (h d_kv) -> ... h seq_len d_kv", V, h=self.num_heads)
         seq_len = x.shape[-2]
-        if self.should_rope:  # apply RoPE
-            rope = get_rope(self.theta, self.d_kv, self.max_seq_len, **self.factory_kwargs)
-            assert token_positions is not None, "Pass token position tensor for RoPE!"
-            Q = rope(Q, token_positions)
-            K = rope(K, token_positions)
+        if self.rope:  # apply RoPE
+            if token_positions is None:
+                raise ValueError("RoPE is set but token_positions is None. Pass token position tensor for RoPE!")
+            Q = self.rope(Q, token_positions)
+            K = self.rope(K, token_positions)
         mask = torch.tril(torch.ones(seq_len, seq_len, device=Q.device, dtype=torch.bool))
         att = scaled_dot_product_attention(Q, K, V, mask)
         return self.o(einx.id("... h seq_len d_kv -> ... seq_len (h d_kv)", att))

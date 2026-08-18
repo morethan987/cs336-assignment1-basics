@@ -8,7 +8,6 @@ import numpy.typing as npt
 import torch
 from jaxtyping import Bool, Float, Int
 from torch import Tensor
-from torch._C import InferredType
 
 from cs336_basics.layers import (
     Embedding,
