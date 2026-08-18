@@ -41,6 +41,6 @@ class SwiGLU(nn.Module):
         return int((self.d_model * 8 / 3 + 63) // 64 * 64)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x1 = self.w1.forward(x)
+        x1 = self.w1(x)
         silu = einx.multiply("... d_ff, ... d_ff -> ... d_ff", x1, torch.sigmoid(x1))
-        return self.w2.forward(einx.multiply("... d_ff, ... d_ff -> ... d_ff", silu, self.w3.forward(x)))
+        return self.w2(einx.multiply("... d_ff, ... d_ff -> ... d_ff", silu, self.w3(x)))
