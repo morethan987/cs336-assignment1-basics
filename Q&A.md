@@ -442,3 +442,82 @@ tests/test_model.py::test_transformer_lm_truncated_input PASSED
 
 ======================= 2 passed, 46 deselected in 2.14s =======================
 ```
+
+### transformer_accounting
+
+1. Consider a GPT-2 XL-sized model using our assignment architecture, which has the following configuration:
+
+```txt
+vocab_size: 50257
+context_length: 1024
+num_layers: 48
+d_model: 1600
+num_heads: 25
+d_ff: 4288 (the nearest multiple of 64 to 8/3 x 1600)
+```
+
+Suppose we constructed our model using this configuration. How many trainable parameters would our model have? Assuming each parameter is represented using single-precision floating point, how much memory is required to just load this model?
+Ans: Exactly trainable parameters is 1,640,452,800, approximately 1.6B. Approximately 6.5GB.
+
+2. Identify the matrix multiplies required to complete a forward pass of our GPT-2 XL-shaped model. How many FLOPs do these matrix multiplies require in total? Assume that our input sequence has context_length tokens.
+Ans: Approximately 2.51TFLOPs.
+
+```json
+{
+  "transformer_block": {
+    "multi_head_attention": 2 * 1600 * 2 * 1024 * 1024,
+    "swiglu": 3 * 2 * 1024 * 1600 * 4288
+  },
+  "output_linear": 2 * 1024 * 1600 * 50257
+}
+```
+
+3. Repeat your analysis with GPT-2 small (12 layers, 768 d_model, 12 heads), GPT-2 medium (24 layers, 1024 d_model, 16 heads), and GPT-2 large (36 layers, 1280 d_model, 20 heads). As the model size increases, which parts of the Transformer LM take up proportionally more or less of the total FLOPs?
+Ans: Small costs 0.234TFLOPs, medium costs 0.624TFLOPs, large costs 1.3TFLOPs. With model size increases, the FFN costs much more FLOPs than other two parts.
+
+```txt
+=== GPT-2 small ===
+Total FLOPs: 233,666,248,704  (233.666 GFLOPs)
+Component                       FLOPs        %  Distribution
+--------------------------------------------------------------------------------
+MHA                    38,654,705,664   16.54%  ████████
+SwiGLU/FFN            115,964,116,992   49.63%  █████████████████████████
+Output Linear          79,047,426,048   33.83%  █████████████████
+
+=== GPT-2 medium ===
+Total FLOPs: 624,013,869,056  (624.014 GFLOPs)
+Component                       FLOPs        %  Distribution
+--------------------------------------------------------------------------------
+MHA                   103,079,215,104   16.52%  ████████
+SwiGLU/FFN            415,538,085,888   66.59%  █████████████████████████████████
+Output Linear         105,396,568,064   16.89%  ████████
+
+=== GPT-2 large ===
+Total FLOPs: 1,303,466,475,520  (1.303 TFLOPs)
+Component                       FLOPs        %  Distribution
+--------------------------------------------------------------------------------
+MHA                   193,273,528,320   14.83%  ███████
+SwiGLU/FFN            978,447,237,120   75.07%  ██████████████████████████████████████
+Output Linear         131,745,710,080   10.11%  █████
+```
+
+4. Take GPT-2 XL and increase the context length to 16,384. How does the total FLOPs for one forward pass change? How does the relative contribution of FLOPs of the model components change?
+Ans: Total FLOPs is 46.8 times of short context one. Multi head attention becomes the major part since the complexity grow quadratically with context length.
+
+```txt
+=== GPT-2 XL (ctx 1024) ===
+Total FLOPs: 2,510,136,934,400  (2.510 TFLOPs)
+Component                       FLOPs        %  Distribution
+--------------------------------------------------------------------------------
+MHA                   322,122,547,200   12.83%  ██████
+SwiGLU/FFN          2,023,332,249,600   80.61%  ████████████████████████████████████████
+Output Linear         164,682,137,600    6.56%  ███
+
+=== GPT-2 XL (ctx 16384) ===
+Total FLOPs: 117,471,602,278,400  (117.472 TFLOPs)
+Component                       FLOPs        %  Distribution
+--------------------------------------------------------------------------------
+MHA                82,463,372,083,200   70.20%  ███████████████████████████████████
+SwiGLU/FFN         32,373,315,993,600   27.56%  ██████████████
+Output Linear       2,634,914,201,600    2.24%  █
+```
