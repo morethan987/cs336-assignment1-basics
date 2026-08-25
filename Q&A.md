@@ -594,3 +594,20 @@ LR       | Step   | Loss
 1000.0   | 9      | 2030040962746548224.000000
 ---------------------------------------------
 ```
+
+### adamw
+
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_optimizer.py::test_adamw PASSED
+
+======================= 1 passed, 47 deselected in 1.40s =======================
+```
