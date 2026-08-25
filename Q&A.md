@@ -611,3 +611,173 @@ tests/test_optimizer.py::test_adamw PASSED
 
 ======================= 1 passed, 47 deselected in 1.40s =======================
 ```
+
+### adamw_accounting
+
+Let us compute how much memory and compute running AdamW requires. Assume we are using float32 for every tensor.
+
+1. How much peak memory does running AdamW require? Decompose your answer based on the memory usage of the parameters, activations, gradients, and optimizer state. Express your answer in terms of the batch_size and the model hyperparameters (vocab_size, context_length, num_layers, d_model, num_heads). Assume d_ff = 8/3 × d_model. For simplicity, when calculating memory usage of activations, consider only the following components:
+  - Transformer Block:
+    - RMSNorm
+    - Multi-head self-attention
+    - SwiGLU
+  - Final RMSNorm
+  - Output embedding
+  - cross-entropy on logits
+Ans:
+
+```py
+def compute_adamw_fp32_peak_memory( batch_size: int, vocab_size: int, context_length: int, num_layers: int, d_model: int, num_heads: int):
+    """
+    GPU memory cost by Transformer with float32 and AdamW
+    """
+    bytes_per_fp32 = 4
+
+    # 1. Trainable parameters
+    # (1) Input Embedding + Output Embedding (LM Head)
+    params_embeddings = 2 * vocab_size * d_model
+
+    # (2) Single Transformer Block
+    # - 2 RMSNorm (Pre-Attn, Pre-FFN)
+    params_rmsnorms_per_layer = 2 * d_model
+    # - MHSA (W_Q, W_K, W_V, W_O)
+    params_mhsa_per_layer = 4 * (d_model**2)
+    # - SwiGLU: d_ff = (8/3) * d_model -> 3 linear layer (gate, up, down)
+    params_swiglu_per_layer = int(3 * d_model * (8 / 3 * d_model))  # 8 * d_model^2
+
+    params_per_layer = params_rmsnorms_per_layer + params_mhsa_per_layer + params_swiglu_per_layer
+    params_all_layers = num_layers * params_per_layer
+
+    # (3) Final RMSNorm
+    params_final_rmsnorm = d_model
+
+    total_params = params_embeddings + params_all_layers + params_final_rmsnorm
+    memory_params = total_params * bytes_per_fp32
+
+    # 2. Gradients
+    # every param has a FP32 gradient
+    memory_gradients = total_params * bytes_per_fp32
+
+    # 3. AdamW Optimizer State
+    # every param has two FP32 state: m_t and v_t
+    memory_optimizer = 2 * total_params * bytes_per_fp32
+
+    # 4. Activations
+    # (1) Single Transformer Block
+    # - RMSNorm (Pre-Attn)
+    act_rmsnorm1 = batch_size * context_length * d_model
+    # - MHSA: QKV input and output (4*B*S*D) + Attn/Softmax (2*B*H*S^2) + Out_proj (1*B*S*D)
+    act_mhsa = 5 * batch_size * context_length * d_model + 2 * batch_size * num_heads * (context_length**2)
+    # - RMSNorm (Pre-FFN)
+    act_rmsnorm2 = batch_size * context_length * d_model
+    # - SwiGLU: input (B*S*D) + 3 internal tensor (B*S*d_ff = 8/3*B*S*D) -> 9*B*S*D
+    act_swiglu = batch_size * context_length * d_model + int(3 * batch_size * context_length * (8 / 3 * d_model))
+
+    act_elements_per_layer = act_rmsnorm1 + act_mhsa + act_rmsnorm2 + act_swiglu
+    act_elements_all_layers = num_layers * act_elements_per_layer
+
+    # (2) other
+    act_final_rmsnorm = batch_size * context_length * d_model
+    act_output_embedding = batch_size * context_length * d_model
+    act_cross_entropy = batch_size * context_length * vocab_size
+
+    total_act_elements = act_elements_all_layers + act_final_rmsnorm + act_output_embedding + act_cross_entropy
+    memory_activations = total_act_elements * bytes_per_fp32
+
+    # 5. Total Peak Memory
+    memory_total = memory_params + memory_gradients + memory_optimizer + memory_activations
+
+    return {
+        "total_params": total_params,
+        "memory_params_bytes": memory_params,
+        "memory_gradients_bytes": memory_gradients,
+        "memory_optimizer_bytes": memory_optimizer,
+        "memory_activations_bytes": memory_activations,
+        "memory_total_bytes": memory_total,
+    }
+```
+
+2. Instantiate your answer for a GPT-2 XL-shaped model to get an expression that only depends on the batch_size. What is the maximum batch size you can use and still fit within 80GB memory?
+Ans: batch size should be 4 to fit within 80GB memory. The result is the upper boundary of peak memory which is larger than actual cost so 81.44GB is probably runable.
+
+```txt
+======================================================================
+Model hyperparams:
+  - batch_size        : 4
+  - vocab_size        : 50257
+  - context_length    : 1024
+  - num_layers        : 48
+  - d_model           : 1600
+  - num_heads         : 25
+======================================================================
+Parameters: 1,635,537,552 (1635.54 M)
+----------------------------------------------------------------------
+GPU memory cost details:
+  1. Params      :   6,542,150,208 Bytes |    6239.08 MB |     6.09 GB
+  2. Gradients   :   6,542,150,208 Bytes |    6239.08 MB |     6.09 GB
+  3. AdamW       :  13,084,300,416 Bytes |   12478.16 MB |    12.19 GB
+  4. Activations :  61,273,816,896 Bytes |   58435.27 MB |    57.07 GB
+----------------------------------------------------------------------
+  Total cost     :  87,442,417,728 Bytes |   83391.59 MB |    81.44 GB
+======================================================================
+Percentages:
+  - Params       :   7.48 %
+  - Gradients    :   7.48 %
+  - Optimizer    :  14.96 %
+  - Activations  :  70.07 %
+======================================================================
+```
+
+3. How many FLOPs does running one step of AdamW take?
+Ans:
+
+```py
+# (1) Input Embedding + Output Embedding (LM Head)
+params_embeddings = 2 * vocab_size * d_model
+# (2) Single Transformer Block
+params_rmsnorms_per_layer = 2 * d_model
+params_mhsa_per_layer = 4 * (d_model**2)
+params_swiglu_per_layer = int(3 * d_model * (8 / 3 * d_model))  # 8 * d_model^2
+params_per_layer = params_rmsnorms_per_layer + params_mhsa_per_layer + params_swiglu_per_layer
+params_all_layers = num_layers * params_per_layer
+# (3) Final RMSNorm
+params_final_rmsnorm = d_model
+params_total = params_embeddings + params_all_layers + params_final_rmsnorm
+
+m_cost = 3 * params_total        # state["m"] = m.lerp_(grad, 1 - betas[0])
+v_cost = 4 * params_total        # state["v"] = (v.mul_(betas[1])).addcmul_(grad, grad, value=(1 - betas[1]))
+weight_decay = params_total      # p *= 1 - lr * weight_decay
+param_update = 5 * params_total  # p.addcdiv_(m, torch.sqrt(v).add_(eps), value=-lr_adj)
+total_flops = m_cost + v_cost + weight_decay + param_update
+```
+
+4. Model FLOPs utilization (MFU) is defined as the ratio of observed throughput (tokens per second) relative to the hardware's theoretical peak FLOP throughput. An NVIDIA H100 GPU has a theoretical peak of 495 teraFLOP/s for "float32" (actually TensorFloat-32, which in reality is "bfloat19") operations. Assuming you are able to get 50% MFU, how long would it take to train a GPT-2 XL for 400K steps and a batch size of 1024 on a single H100? Assume that the backward pass has twice the FLOPs of the forward pass.
+Ans: 10792.576 * 4e5 / (495 * 0.5) / 3600 = 4845.152 hours.
+
+```txt
+================================================================================
+Model hyperparams:
+  - batch_size        : 1024
+  - vocab_size        : 50257
+  - context_length    : 1024
+  - num_layers        : 48
+  - d_model           : 1600
+  - num_heads         : 25
+================================================================================
+Single forward Token count: 1,048,576 (Batch Size x Context Length)
+--------------------------------------------------------------------------------
+Forward FLOPs details:
+  - Attention (QKV & Out Proj)          : 1,030,792,151,040,000 FLOPs |   1030.792 TFLOPs |   1.0308 PFLOPs (28.65 %)
+  - Attention (QK^T & PV Score)         : 329,853,488,332,800 FLOPs |    329.853 TFLOPs |   0.3299 PFLOPs ( 9.17 %)
+  - SwiGLU Projections (Gate, Up, Down) : 2,061,262,179,532,800 FLOPs |   2061.262 TFLOPs |   2.0613 PFLOPs (57.30 %)
+  - LM Head Projection                  : 168,634,508,902,400 FLOPs |    168.635 TFLOPs |   0.1686 PFLOPs ( 4.69 %)
+  - RMSNorms (All)                      :    650,955,980,800 FLOPs |      0.651 TFLOPs |   0.0007 PFLOPs ( 0.02 %)
+  - Activations & Softmax & Residuals   :  6,331,976,122,368 FLOPs |      6.332 TFLOPs |   0.0063 PFLOPs ( 0.18 %)
+--------------------------------------------------------------------------------
+  Forward Total: 3,597,525,259,911,168 FLOPs |   3597.525 TFLOPs |   3.5975 PFLOPs
+================================================================================
+Explaination:
+  1. Backward usually costs 2 times FLOPs as Forward (Backward = 2 * Forward)
+  2. Single step total (Forward + Backward) = 10,792,575,779,733,504 FLOPs |  10792.576 TFLOPs |  10.7926 PFLOPs
+================================================================================
+```
