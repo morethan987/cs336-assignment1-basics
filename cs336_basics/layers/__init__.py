@@ -6,7 +6,7 @@ from .rope import RoPE
 from .swiglu import SwiGLU
 from .transformer_block import TransformerBlock
 from .transformer_lm import TransformerLM
-from .utils import scaled_dot_product_attention, softmax
+from .utils import cross_entropy, scaled_dot_product_attention, softmax
 
 __all__ = [
     "Embedding",
@@ -17,6 +17,7 @@ __all__ = [
     "SwiGLU",
     "TransformerBlock",
     "TransformerLM",
+    "cross_entropy",
     "scaled_dot_product_attention",
     "softmax",
 ]

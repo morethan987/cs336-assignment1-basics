@@ -521,3 +521,20 @@ MHA                82,463,372,083,200   70.20%  ██████████�
 SwiGLU/FFN         32,373,315,993,600   27.56%  ██████████████
 Output Linear       2,634,914,201,600    2.24%  █
 ```
+
+### cross_entropy
+
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_nn_utils.py::test_cross_entropy PASSED
+
+======================= 1 passed, 47 deselected in 0.98s =======================
+```
