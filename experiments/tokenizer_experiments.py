@@ -5,7 +5,7 @@ import time
 
 from numpy import average
 
-from cs336_basics.bpe_tokenizer import BPE_Tokenizer
+from cs336_basics.tokenizer import BPE_Tokenizer
 
 ts_tokenizer = BPE_Tokenizer.from_files(
     vocab_filepath="outputs/bpe_trainer/20260725_204945/vocab.pkl",
@@ -198,8 +198,8 @@ def benchmark_tokenizer(
 
 def test_throughput():
     tests = [
-        ( "TinyStories", "data/TinyStoriesV2-GPT4-valid.txt", ts_tokenizer),
-        ( "OpenWebText", "data/owt_valid.txt", owt_tokenizer),
+        ("TinyStories", "data/TinyStoriesV2-GPT4-valid.txt", ts_tokenizer),
+        ("OpenWebText", "data/owt_valid.txt", owt_tokenizer),
     ]
 
     print(f"{'Dataset':<15}{'MB/s':>12}{'tokens/s':>15}{'bytes/token':>15}")
