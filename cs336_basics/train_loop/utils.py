@@ -1,5 +1,9 @@
 import math
+import os
+import uuid
 from collections.abc import Iterable
+from pathlib import Path
+from typing import IO, BinaryIO
 
 import numpy as np
 import numpy.typing as npt
@@ -64,3 +68,58 @@ def load_data(
     inputs = torch.tensor(np.array(inputs_list), dtype=torch.long, device=device)
     targets = torch.tensor(np.array(targets_list), dtype=torch.long, device=device)
     return inputs, targets
+
+
+def save_checkpoint(
+    model: torch.nn.Module,
+    optimizer: torch.optim.Optimizer,
+    iteration: int,
+    out: str | os.PathLike | BinaryIO | IO[bytes],
+) -> None:
+    """
+    Dump all the state from the model, optimizer and iteration into the file-like object out
+    Uses atomic writes if 'out' is a file path to prevent checkpoint corruption.
+    """
+    checkpoint = {
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "iteration": iteration,
+    }
+
+    if isinstance(out, (str, os.PathLike)):  # out is a path
+        out_path = Path(out)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        temp_path = out_path.with_name(f".{out_path.name}.tmp.{uuid.uuid4().hex[:8]}")
+
+        try:
+            torch.save(checkpoint, temp_path)
+            os.replace(temp_path, out_path)
+        except Exception:
+            if temp_path.exists():
+                temp_path.unlink()
+            raise
+    else:  # out is stream or file object
+        torch.save(checkpoint, out)
+
+
+def load_checkpoint(
+    src: str | os.PathLike | BinaryIO | IO[bytes],
+    model: torch.nn.Module,
+    optimizer: torch.optim.Optimizer,
+) -> int:
+    """
+    Load a checkpoint from src (path or file-like object), and then recover the model and optimizer states from that checkpoint
+    Handles cross-device mapping and supports weights_only for security.
+    Returns:
+        iteration (int): the previously-serialized number of iterations.
+    """
+    try:
+        target_device = next(model.parameters()).device
+    except StopIteration:
+        target_device = torch.device("cpu")
+
+    checkpoint = torch.load(src, map_location=target_device, weights_only=True)
+    model.load_state_dict(checkpoint["model"])
+    optimizer.load_state_dict(checkpoint["optimizer"])
+
+    return checkpoint["iteration"]
