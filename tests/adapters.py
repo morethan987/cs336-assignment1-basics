@@ -23,7 +23,7 @@ from cs336_basics.layers import (
     softmax,
 )
 from cs336_basics.tokenizer import BPE_Tokenizer, BPE_Trainer
-from cs336_basics.train_loop import AdamW
+from cs336_basics.train_loop import AdamW, cosine_annealing
 
 
 def run_linear(
@@ -578,7 +578,7 @@ def run_get_lr_cosine_schedule(
     Returns:
         Learning rate at the given iteration under the specified schedule.
     """
-    raise NotImplementedError
+    return cosine_annealing(it, max_learning_rate, min_learning_rate, warmup_iters, cosine_cycle_iters)
 
 
 def run_save_checkpoint(

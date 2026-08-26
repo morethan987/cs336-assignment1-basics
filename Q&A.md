@@ -781,3 +781,20 @@ Explaination:
   2. Single step total (Forward + Backward) = 10,792,575,779,733,504 FLOPs |  10792.576 TFLOPs |  10.7926 PFLOPs
 ================================================================================
 ```
+
+### learning_rate_schedule
+
+Ans: success.
+
+```txt
+============================= test session starts ==============================
+platform linux -- Python 3.13.14, pytest-9.1.1, pluggy-1.6.0
+rootdir: /home/morethan/github/cs336-assignment1-basics
+configfile: pyproject.toml
+plugins: timeout-2.4.0, jaxtyping-0.3.11
+collected 48 items / 47 deselected / 1 selected
+
+tests/test_optimizer.py::test_get_lr_cosine_schedule PASSED
+
+======================= 1 passed, 47 deselected in 0.82s =======================
+```
