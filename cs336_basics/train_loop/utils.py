@@ -47,6 +47,7 @@ def load_data(
     batch_size: int,
     context_length: int,
     device: str,
+    generator: np.random.Generator,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Sample a batch of input sequences and next-token targets from tokenized data.
@@ -55,18 +56,19 @@ def load_data(
         batch_size (B): Number of sequences to sample in a batch.
         context_length (m): Length of each sequence.
         device: PyTorch device (e.g., 'cpu', 'cuda:0', 'mps').
+        generator: np.random.Generator instance
     Returns:
         inputs: Tensor of shape (batch_size, context_length) on device.
         targets: Tensor of shape (batch_size, context_length) on device.
     """
     max_id = len(dataset) - context_length
-    starts = np.random.randint(0, max_id, size=batch_size)
+    starts = generator.integers(0, max_id, size=batch_size)
 
-    inputs_list = [dataset[i : i + context_length] for i in starts]
-    targets_list = [dataset[i + 1 : i + 1 + context_length] for i in starts]
+    inputs_array = np.stack([dataset[i : i + context_length] for i in starts])
+    targets_array = np.stack([dataset[i + 1 : i + 1 + context_length] for i in starts])
 
-    inputs = torch.tensor(np.array(inputs_list), dtype=torch.long, device=device)
-    targets = torch.tensor(np.array(targets_list), dtype=torch.long, device=device)
+    inputs = torch.tensor(inputs_array, dtype=torch.long, device=device)
+    targets = torch.tensor(targets_array, dtype=torch.long, device=device)
     return inputs, targets
 
 

@@ -4,6 +4,7 @@ import os
 from collections.abc import Iterable
 from typing import IO, Any, BinaryIO
 
+import numpy
 import numpy.typing as npt
 import torch
 from jaxtyping import Bool, Float, Int
@@ -504,7 +505,8 @@ def run_get_batch(
         is the sampled input sequences, and the second tuple item is the corresponding
         language modeling labels.
     """
-    return load_data(dataset, batch_size, context_length, device)
+    rng = numpy.random.default_rng()
+    return load_data(dataset, batch_size, context_length, device, rng)
 
 
 def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, " ..."]:
