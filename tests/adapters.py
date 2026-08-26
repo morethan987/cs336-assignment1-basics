@@ -23,7 +23,7 @@ from cs336_basics.layers import (
     softmax,
 )
 from cs336_basics.tokenizer import BPE_Tokenizer, BPE_Trainer
-from cs336_basics.train_loop import AdamW, cosine_annealing
+from cs336_basics.train_loop import AdamW, cosine_annealing, gradient_clipping
 
 
 def run_linear(
@@ -543,7 +543,7 @@ def run_gradient_clipping(parameters: Iterable[torch.nn.Parameter], max_l2_norm:
 
     The gradients of the parameters (parameter.grad) should be modified in-place.
     """
-    raise NotImplementedError
+    return gradient_clipping(parameters, max_l2_norm)
 
 
 def get_adamw_cls() -> Any:

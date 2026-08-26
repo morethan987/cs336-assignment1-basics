@@ -1,4 +1,7 @@
 import math
+from collections.abc import Iterable
+
+import torch
 
 
 def cosine_annealing(t: int, alpha_max: float, alpha_min: float, t_w: int, t_c: int) -> float:
@@ -19,3 +22,15 @@ def cosine_annealing(t: int, alpha_max: float, alpha_min: float, t_w: int, t_c: 
         return alpha_min + 0.5 * (alpha_max - alpha_min) * (1 + math.cos(math.pi / (t_c - t_w) * (t - t_w)))
     else:
         return alpha_min
+
+
+@torch.no_grad()
+def gradient_clipping(params: Iterable[torch.nn.Parameter], max_l2_norm: float, eps: float = 1e-6) -> None:
+    grads = [p.grad for p in params if p.grad is not None]
+    if len(grads) == 0:
+        return
+
+    total_norm = torch.stack([g.norm() for g in grads]).norm()
+    clip_coef = torch.clamp(max_l2_norm / (eps + total_norm), max=1.0)
+    for g in grads:
+        g.mul_(clip_coef)
