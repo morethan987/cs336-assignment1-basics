@@ -127,3 +127,19 @@ def load_checkpoint(
     optimizer.load_state_dict(checkpoint["optimizer"])
 
     return checkpoint["iteration"]
+
+
+def parse_dtype(dtype_str: str) -> torch.dtype:
+    """convert string to torch.dtype"""
+    dtype_map = {
+        "float32": torch.float32,
+        "fp32": torch.float32,
+        "bfloat16": torch.bfloat16,
+        "bf16": torch.bfloat16,
+        "float16": torch.float16,
+        "fp16": torch.float16,
+    }
+    dtype_str = dtype_str.lower()
+    if dtype_str in dtype_map:
+        return dtype_map[dtype_str]
+    raise ValueError(f"Unsupported dtype: '{dtype_str}'. Choose from {list(dtype_map.keys())}")
