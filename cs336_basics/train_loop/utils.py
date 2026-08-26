@@ -31,15 +31,17 @@ def cosine_annealing(t: int, alpha_max: float, alpha_min: float, t_w: int, t_c: 
 
 
 @torch.no_grad()
-def gradient_clipping(params: Iterable[torch.nn.Parameter], max_l2_norm: float, eps: float = 1e-6) -> None:
+def gradient_clipping(params: Iterable[torch.nn.Parameter], max_l2_norm: float, eps: float = 1e-6) -> torch.Tensor:
+    """In-place change gradients and return original norm"""
     grads = [p.grad for p in params if p.grad is not None]
     if len(grads) == 0:
-        return
+        return torch.Tensor(0.0)
 
     total_norm = torch.stack([g.norm() for g in grads]).norm()
     clip_coef = torch.clamp(max_l2_norm / (eps + total_norm), max=1.0)
     for g in grads:
         g.mul_(clip_coef)
+    return total_norm
 
 
 def load_data(
