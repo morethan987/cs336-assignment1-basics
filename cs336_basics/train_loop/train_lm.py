@@ -39,6 +39,7 @@ class ModelConfig:
 class TrainConfig:
     # path and tags
     name: str = "experiment"
+    description: str = ""
     checkpoints_dir: Path = Path("checkpoints")
     train_data: Path = Path()
     valid_data: Path | None = None
@@ -237,6 +238,7 @@ class Trainer:
 
     def fit(self):
         print(f"Starting training run: {self.run_dir.name}")
+        print(self.train_cfg.description)
         self.model.train()
         start_time = time.perf_counter()
         interval_start_time = time.perf_counter()
@@ -318,6 +320,7 @@ def parse_args() -> Config:
     # Train
     train_group = parser.add_argument_group("Training Arguments")
     train_group.add_argument("--name", type=str, default="experiment")
+    train_group.add_argument("--desc", type=str, default="")
     train_group.add_argument("--checkpoints_dir", type=Path, default=Path("checkpoints"))
     train_group.add_argument("--train_data", type=Path, required=True)
     train_group.add_argument("--valid_data", type=Path, default=None)
@@ -359,6 +362,7 @@ def parse_args() -> Config:
     )
     train_cfg = TrainConfig(
         name=args.name,
+        description=args.desc,
         checkpoints_dir=args.checkpoints_dir,
         train_data=args.train_data,
         valid_data=args.valid_data,
