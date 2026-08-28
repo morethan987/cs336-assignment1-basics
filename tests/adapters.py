@@ -507,7 +507,7 @@ def run_get_batch(
         language modeling labels.
     """
     rng = numpy.random.default_rng()
-    return load_data(dataset, batch_size, context_length, device, rng)
+    return load_data(dataset, batch_size, context_length, torch.device(device), rng)
 
 
 def run_softmax(in_features: Float[Tensor, " ..."], dim: int) -> Float[Tensor, " ..."]:

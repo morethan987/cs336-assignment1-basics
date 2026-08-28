@@ -51,7 +51,7 @@ def load_data(
     dataset: npt.NDArray,
     batch_size: int,
     context_length: int,
-    device: str,
+    device: torch.device,
     generator: np.random.Generator,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
