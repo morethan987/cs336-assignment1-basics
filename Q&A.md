@@ -860,3 +860,11 @@ tests/test_serialization.py::test_checkpointing PASSED
 
 ======================= 1 passed, 47 deselected in 0.85s =======================
 ```
+
+### decoding
+
+Ans: success.
+
+### experiment_log
+
+Ans: success.
