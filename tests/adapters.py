@@ -21,6 +21,7 @@ from cs336_basics.layers import (
     TransformerLM,
     cross_entropy,
     scaled_dot_product_attention,
+    silu,
     softmax,
 )
 from cs336_basics.tokenizer import BPE_Tokenizer, BPE_Trainer
@@ -482,7 +483,7 @@ def run_silu(in_features: Float[Tensor, " ..."]) -> Float[Tensor, " ..."]:
         Float[Tensor,"..."]: of with the same shape as `in_features` with the output of applying
         SiLU to each element.
     """
-    raise NotImplementedError
+    return silu(in_features)
 
 
 def run_get_batch(
