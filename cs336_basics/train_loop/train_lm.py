@@ -241,21 +241,22 @@ class Trainer:
         print(self.train_cfg.description)
         self.model.train()
         start_time = time.perf_counter()
-        interval_start_time = time.perf_counter()
+        train_time_accum = 0.0
 
         tokens_per_step = self.train_cfg.batch_size * self.model_cfg.context_length
         for step in range(1, self.train_cfg.max_steps + 1):
+            step_start = time.perf_counter()
             lr, loss, grad_norm = self.train_step(step)
+            train_time_accum += time.perf_counter() - step_start
 
             # logging
             if step % self.train_cfg.log_interval == 0:
                 # time cost and throughput
                 current_time = time.perf_counter()
-                interval_time = current_time - interval_start_time
                 elapsed_total = current_time - start_time
-                step_time_ms = (interval_time / self.train_cfg.log_interval) * 1000
-                tok_per_sec = (tokens_per_step * self.train_cfg.log_interval) / interval_time
-                interval_start_time = current_time
+                step_time_ms = (train_time_accum / self.train_cfg.log_interval) * 1000
+                tok_per_sec = (tokens_per_step * self.train_cfg.log_interval) / train_time_accum
+                train_time_accum = 0.0  # reset
                 print(
                     f"[{dt.now(timezone(timedelta(hours=8))).strftime('%H:%M:%S')}] "
                     f"Step {step}/{self.train_cfg.max_steps} | "
@@ -269,7 +270,6 @@ class Trainer:
                 if self.train_cfg.use_wandb:
                     wandb.log(
                         {
-                            "train/step": step,
                             "train/learning_rate": lr,
                             "train/loss": loss.item(),
                             "train/original_grad_norm": grad_norm.item(),
