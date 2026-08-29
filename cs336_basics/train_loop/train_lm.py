@@ -177,7 +177,7 @@ class Trainer:
 
         # forward and backward
         self.optimizer.zero_grad()
-        logits = self.model(x)
+        logits = self.model(x, torch.arange(0, x.shape[-1], dtype=torch.int, device=x.device))
         loss = cross_entropy(logits, targets)
         loss.backward()
 
@@ -207,18 +207,18 @@ class Trainer:
             end = start + batch_tokens
 
             x = (
-                torch.from_numpy(self.val_dataset[start:end])
+                torch.from_numpy(self.val_dataset[start:end].copy())
                 .view(bs, ctx_len)
                 .to(self.model_cfg.device, dtype=torch.long)
             )
             targets = (
-                torch.from_numpy(self.val_dataset[start + 1 : end + 1])
+                torch.from_numpy(self.val_dataset[start + 1 : end + 1].copy())
                 .view(bs, ctx_len)
                 .to(self.model_cfg.device, dtype=torch.long)
             )
 
             # forward and loss
-            logits = self.model(x)
+            logits = self.model(x, torch.arange(0, x.shape[-1], dtype=torch.int, device=x.device))
             loss = cross_entropy(logits, targets)
             total_loss += loss.item()
 
@@ -281,7 +281,7 @@ class Trainer:
                     )
 
             # evaluate
-            if self.val_dataset is not None and step % self.train_cfg.val_interval:
+            if self.val_dataset is not None and step % self.train_cfg.val_interval == 0:
                 val_loss = self.evaluate()
                 print(f"Step {step}/{self.train_cfg.max_steps} | Valid Loss: {val_loss:.4f}")
                 if self.train_cfg.use_wandb:
