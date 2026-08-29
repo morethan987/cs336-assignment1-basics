@@ -45,6 +45,21 @@ def encode_tinystory():
     encode_to_bin_stream(ts_tokenizer, train_file, t_save)
 
 
+def encode_tinystory_mini():
+    ts_tokenizer = BPE_Tokenizer.from_files(
+        vocab_filepath="outputs/bpe_trainer/20260725_204945/vocab.pkl",
+        merges_filepath="outputs/bpe_trainer/20260725_204945/merges.pkl",
+        special_tokens=["<|endoftext|>"],
+    )
+    time_stmp = dt.now(timezone(timedelta(hours=8))).strftime("%Y%m%d_%H%M%S")
+    save_dir = os.path.join(output_dir, time_stmp)
+    os.makedirs(save_dir, exist_ok=True)
+    mini_save = os.path.join(save_dir, "TinyStoriesV2-GPT4-mini-tokenized.bin")
+
+    mini_file = "data/TinyStoriesV2-GPT4-mini.txt"
+    encode_to_bin_stream(ts_tokenizer, mini_file, mini_save)
+
+
 def encode_owt():
     owt_tokenizer = BPE_Tokenizer.from_files(
         vocab_filepath="outputs/bpe_trainer/20260727_015403/vocab.pkl",
@@ -101,6 +116,7 @@ def tiny_test():
 
 
 if __name__ == "__main__":
-    tiny_test()
+    # tiny_test()
     # encode_tinystory()
+    encode_tinystory_mini()
     # encode_owt()
