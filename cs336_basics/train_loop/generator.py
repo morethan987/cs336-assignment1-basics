@@ -1,6 +1,3 @@
-import os
-from typing import IO, BinaryIO
-
 import torch
 
 from cs336_basics.layers import TransformerLM, softmax
@@ -8,18 +5,11 @@ from cs336_basics.tokenizer import BPE_Tokenizer
 
 
 class TextGenerator:
-    def __init__(
-        self, model: TransformerLM, tokenizer: BPE_Tokenizer, checkpoint_src: str | os.PathLike | BinaryIO | IO[bytes]
-    ) -> None:
+    def __init__(self, model: TransformerLM, tokenizer: BPE_Tokenizer) -> None:
         self.tokenizer = tokenizer
         self.model = model
-        self._load_checkpoint(checkpoint_src)
         self.model.eval()
         self.device = next(self.model.parameters()).device
-
-    def _load_checkpoint(self, src: str | os.PathLike | BinaryIO | IO[bytes]) -> None:
-        checkpoint = torch.load(src, map_location=self.device, weights_only=True)
-        self.model.load_state_dict(checkpoint["model"])
 
     @torch.inference_mode()
     def generate(
