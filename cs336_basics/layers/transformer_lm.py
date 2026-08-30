@@ -57,12 +57,14 @@ class TransformerLM(nn.Module):
         self.output_rms = RMSNorm(d_model, **self.factory_kwargs)
         self.output_linear = Linear(d_model, self.vocab_size, **self.factory_kwargs)
 
-    def forward(self, token_ids: torch.Tensor, token_positions: torch.Tensor) -> torch.Tensor:
+    def forward(self, token_ids: torch.Tensor, token_positions: torch.Tensor | None = None) -> torch.Tensor:
         seq_len = token_ids.shape[-1]
         if seq_len > self.context_length:
             raise ValueError(
                 f"Input sequence is too long:\nseq_len = {seq_len} > max_context_length = {self.context_length}"
             )
+        if token_positions is None:
+            token_positions = torch.arange(0, seq_len, dtype=torch.int, device=token_ids.device)
         x = self.embed(token_ids)
         for block in self.transformers:
             x = block(x, token_positions)
