@@ -24,12 +24,12 @@ def main():
         name="mini_test",
         description="Test quick overfitting on mini dataset",
         train_data=Path(
-            "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-valid-tokenized.bin"
+            "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260829_224820/TinyStoriesV2-GPT4-mini-tokenized.bin"
         ),
         valid_data=Path(
-            "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-valid-tokenized.bin"
+            "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260829_224820/TinyStoriesV2-GPT4-mini-tokenized.bin"
         ),
-        max_steps=500,
+        max_steps=1000,
         batch_size=16,
         lr=1e-3,
         min_lr=1e-4,
