@@ -1,3 +1,4 @@
+import argparse
 import os
 from typing import IO, BinaryIO
 
@@ -14,7 +15,7 @@ def _load_checkpoint(model: TransformerLM, src: str | os.PathLike | BinaryIO | I
     model.load_state_dict(checkpoint["model"])
 
 
-def main():
+def main(args: argparse.Namespace):
     model = TransformerLM(
         vocab_size=10000,
         context_length=256,
@@ -26,7 +27,8 @@ def main():
         device=torch.device("cuda:0"),
     )
     _load_checkpoint(
-        model, src="/root/cs336/cs336-assignment1-basics/checkpoints/mini_test_20260830_114028/checkpoint_latest.pt"
+        model,
+        src="/root/cs336/cs336-assignment1-basics/checkpoints/tinystories_lr_1.5e-3_20260830_195843/checkpoint_latest.pt",
     )
 
     eos_token = "<|endoftext|>"
@@ -39,7 +41,7 @@ def main():
     generator = TextGenerator(model, tokenizer)
 
     prompt = "Once upon a time, in a warm and sunny place, there was a big pit."
-    output = generator.generate(prompt, eos_token, temp=0.8, p=0.9)
+    output = generator.generate(prompt, eos_token, temp=args.temperature, p=args.top_p)
     print(f"Input prompt:\n{prompt}")
     print("Original text piece:")
     print(
@@ -48,5 +50,14 @@ def main():
     print(f"Generated output:\n{output}")
 
 
+def parse() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Text generation test")
+    parser.add_argument("--temperature", type=float, required=True)
+    parser.add_argument("--top_p", type=float, required=True)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    main()
+    # pueue add -l "1.0_0.5" "uv run scripts/generate_test.py --temperature 0.8 --top_p 0.9"
+    args = parse()
+    main(args)
