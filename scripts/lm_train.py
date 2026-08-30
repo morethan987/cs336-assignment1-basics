@@ -68,7 +68,7 @@ def tinystories_train():
     )
 
     train_cfg = TrainConfig(
-        name="tinystories",
+        name="tinystories_lr_7.5e-4",
         description="A formal training on TinyStories",
         train_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-train-tokenized.bin"
@@ -78,8 +78,8 @@ def tinystories_train():
         ),
         max_steps=5000,
         batch_size=256,
-        lr=5e-4,
-        min_lr=5e-5,
+        lr=7.5e-4,
+        min_lr=7.5e-5,
         warmup_steps=100,
         weight_decay=0.01,
         eps=1e-8,
@@ -103,5 +103,6 @@ def tinystories_train():
 
 
 if __name__ == "__main__":
+    # pueue add -l "lr=7.5e-4" "uv run scripts/lm_train.py"
     # mini_test()
     tinystories_train()

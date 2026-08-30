@@ -868,3 +868,15 @@ Ans: success.
 ### experiment_log
 
 Ans: success.
+
+### learning_rate
+
+The learning rate is one of the most important hyperparameters to tune. Taking the base model you've trained, answer the following questions:
+
+1. Perform a hyperparameter sweep over the learning rates and report the final losses (or note divergence if the optimizer diverges).
+Ans: Follow Coarse-to-Fine Strategy. Start with a heuristic lr as 5e-4 and it finally converges. Then conduct coarse sweeping: 1e-4, 5e-4, 1e-3, 3e-3, 6e-3, 1e-2. lr=1e-3 is the best. Conduct fine sweeping: 1.5e-3 ("middle" of 1e-3 and 3e-3), 7.5e-4 (middle of 1e-3 and 5e-4). 1.5e-3 is the best and final valid loss is 1.447.
+
+![Valid loss curves](assets/sweep_lr.png)
+
+2. Folk wisdom is that the best learning rate is "at the edge of stability." Investigate how the point at which learning rates diverge is related to your best learning rate.
+Ans: This generally supports the folk wisdom, but suggests that the "edge" of stability may not be a single value but rather a band which ranges from 1e-3 to 3e-3.
