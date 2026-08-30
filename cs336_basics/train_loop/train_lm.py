@@ -285,7 +285,7 @@ class Trainer:
                 val_loss = self.evaluate()
                 print(f"Step {step}/{self.train_cfg.max_steps} | Valid Loss: {val_loss:.4f}")
                 if self.train_cfg.use_wandb:
-                    wandb.log({"valid/step": step}, step=step)
+                    wandb.log({"valid/loss": val_loss}, step=step)
 
             # save
             if step % self.train_cfg.save_interval == 0:
