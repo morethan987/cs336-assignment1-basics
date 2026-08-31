@@ -239,24 +239,34 @@ class Trainer:
     def fit(self):
         print(f"Starting training run: {self.run_dir.name}")
         print(self.train_cfg.description)
-        self.model.train()
-        start_time = time.perf_counter()
-        train_time_accum = 0.0
 
         tokens_per_step = self.train_cfg.batch_size * self.model_cfg.context_length
-        for step in range(self.train_cfg.max_steps):
+        start_time = time.perf_counter()
+
+        if self.val_dataset is not None:
+            init_val_loss = self.evaluate()
+            print(f"[Init] Step 0/{self.train_cfg.max_steps} | Initial Valid Loss: {init_val_loss:.4f}")
+            if self.train_cfg.use_wandb:
+                wandb.log({"valid/loss": init_val_loss}, step=0)
+
+        self.model.train()
+        train_time_accum = 0.0
+        steps_since_log = 0
+
+        for step in range(1, self.train_cfg.max_steps + 1):
+            is_last_step = step == self.train_cfg.max_steps
+
             step_start = time.perf_counter()
             lr, loss, grad_norm = self.train_step(step)
             train_time_accum += time.perf_counter() - step_start
+            steps_since_log += 1
 
-            # logging
-            if step % self.train_cfg.log_interval == 0:
-                # time cost and throughput
+            if step % self.train_cfg.log_interval == 0 or is_last_step:
                 current_time = time.perf_counter()
                 elapsed_total = current_time - start_time
-                step_time_ms = (train_time_accum / self.train_cfg.log_interval) * 1000
-                tok_per_sec = (tokens_per_step * self.train_cfg.log_interval) / train_time_accum
-                train_time_accum = 0.0  # reset
+                step_time_ms = (train_time_accum / steps_since_log) * 1000
+                tok_per_sec = (tokens_per_step * steps_since_log) / train_time_accum
+
                 print(
                     f"[{dt.now(timezone(timedelta(hours=8))).strftime('%H:%M:%S')}] "
                     f"Step {step}/{self.train_cfg.max_steps} | "
@@ -280,20 +290,18 @@ class Trainer:
                         step=step,
                     )
 
-            # evaluate
-            if self.val_dataset is not None and step % self.train_cfg.val_interval == 0:
+                train_time_accum = 0.0
+                steps_since_log = 0
+
+            if self.val_dataset is not None and (step % self.train_cfg.val_interval == 0 or is_last_step):
                 val_loss = self.evaluate()
                 print(f"Step {step}/{self.train_cfg.max_steps} | Valid Loss: {val_loss:.4f}")
                 if self.train_cfg.use_wandb:
                     wandb.log({"valid/loss": val_loss}, step=step)
+                self.model.train()
 
-            # save, must use step+1
-            if (step + 1) % self.train_cfg.save_interval == 0:
-                self.save_checkpoint(step + 1)
-
-        # save last
-        if not (self.run_dir / f"checkpoint_step_{self.train_cfg.max_steps}.pt").exists():
-            self.save_checkpoint(self.train_cfg.max_steps)
+            if step % self.train_cfg.save_interval == 0 or is_last_step:
+                self.save_checkpoint(step)
 
         print("Training complete!")
 
