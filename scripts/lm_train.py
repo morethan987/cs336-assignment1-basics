@@ -1,4 +1,5 @@
 import argparse
+import math
 from pathlib import Path
 
 import torch
@@ -70,8 +71,8 @@ def tinystories_train(args: argparse.Namespace):
 
     scale = int(256 / args.batch_size)
     train_cfg = TrainConfig(
-        name=f"tinystories_bs_{args.batch_size}",
-        description="Sweeping batch size",
+        name=f"tinystories_bs_{args.batch_size}_lr_scaled",
+        description="Sweeping batch size with lr scaled",
         train_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-train-tokenized.bin"
         ),
@@ -80,8 +81,8 @@ def tinystories_train(args: argparse.Namespace):
         ),
         max_steps=5000 * scale,
         batch_size=args.batch_size,
-        lr=1.5e-3,
-        min_lr=1.5e-4,
+        lr=1.5e-3 / math.sqrt(scale),
+        min_lr=1.5e-4 / math.sqrt(scale),
         warmup_steps=100 * scale,
         weight_decay=0.01,
         eps=1e-8,
@@ -111,7 +112,7 @@ def parse() -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    # pueue add -l "bs=128" "uv run scripts/lm_train.py --batch_size 128"
+    # pueue add "uv run scripts/lm_train.py --batch_size 128"
     # mini_test()
     args = parse()
     tinystories_train(args)

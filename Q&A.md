@@ -880,3 +880,10 @@ Ans: Follow Coarse-to-Fine Strategy. Start with a heuristic lr as 5e-4 and it fi
 
 2. Folk wisdom is that the best learning rate is "at the edge of stability." Investigate how the point at which learning rates diverge is related to your best learning rate.
 Ans: This generally supports the folk wisdom, but suggests that the "edge" of stability may not be a single value but rather a band which ranges from 1e-3 to 3e-3.
+
+### batch_size_experiment
+
+Vary your batch size all the way from 1 to the GPU memory limit. Try at least a few batch sizes in between, including typical sizes like 64 and 128.
+Ans: A small batch size leading to extrem unstablibity if lr not changed simultaneously. Learning rate should decrease by square root which improves much but the best curve is still the one with batch_size 256 and lr 1.5e-3. 256 is the maximum batch size on RTX 4090 so this experiment cannot touch the threshold where larger batch size leads to a worse performance.
+
+![sweep_batch_size](assets/sweep_batch_size.png)
