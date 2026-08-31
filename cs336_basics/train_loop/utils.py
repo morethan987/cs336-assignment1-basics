@@ -5,19 +5,16 @@ from collections.abc import Iterable
 from pathlib import Path
 from typing import IO, BinaryIO
 
-import einx
 import numpy as np
 import numpy.typing as npt
 import torch
-
-from cs336_basics.layers import TransformerLM, softmax
 
 
 def cosine_annealing(t: int, alpha_max: float, alpha_min: float, t_w: int, t_c: int) -> float:
     """
     Cosine annealing learning rate scheduling
     Args:
-        t (int): current iteration
+        t (int): current iteration, starts from 0
         alpha_max (float): maximum learning rate
         alpha_min (float): minimum (final) learning rate
         t_w (int): number of warmup iterations
@@ -25,6 +22,7 @@ def cosine_annealing(t: int, alpha_max: float, alpha_min: float, t_w: int, t_c: 
     Return:
         lr_t (float): learning rate at iteration t
     """
+    t += 1
     if t < t_w:  # warmup
         return (alpha_max / t_w) * t
     elif t <= t_c:  # cosine annealing

@@ -244,7 +244,7 @@ class Trainer:
         train_time_accum = 0.0
 
         tokens_per_step = self.train_cfg.batch_size * self.model_cfg.context_length
-        for step in range(1, self.train_cfg.max_steps + 1):
+        for step in range(self.train_cfg.max_steps):
             step_start = time.perf_counter()
             lr, loss, grad_norm = self.train_step(step)
             train_time_accum += time.perf_counter() - step_start
@@ -287,9 +287,9 @@ class Trainer:
                 if self.train_cfg.use_wandb:
                     wandb.log({"valid/loss": val_loss}, step=step)
 
-            # save
-            if step % self.train_cfg.save_interval == 0:
-                self.save_checkpoint(step)
+            # save, must use step+1
+            if (step + 1) % self.train_cfg.save_interval == 0:
+                self.save_checkpoint(step + 1)
 
         # save last
         if not (self.run_dir / f"checkpoint_step_{self.train_cfg.max_steps}.pt").exists():
