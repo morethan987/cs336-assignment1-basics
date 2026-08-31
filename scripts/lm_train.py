@@ -1,3 +1,4 @@
+import argparse
 from pathlib import Path
 
 import torch
@@ -55,7 +56,7 @@ def mini_test():
     trainer.fit()
 
 
-def tinystories_train():
+def tinystories_train(args: argparse.Namespace):
     model_cfg = ModelConfig(
         vocab_size=10000,
         context_length=256,
@@ -67,27 +68,28 @@ def tinystories_train():
         device=torch.device("cuda:0"),
     )
 
+    scale = 256 / args.batch_size
     train_cfg = TrainConfig(
-        name="tinystories_lr_7.5e-4",
-        description="A formal training on TinyStories",
+        name=f"tinystories_bs_{args.batch_size}",
+        description="Sweeping batch size",
         train_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-train-tokenized.bin"
         ),
         valid_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-valid-tokenized.bin"
         ),
-        max_steps=5000,
-        batch_size=256,
-        lr=7.5e-4,
-        min_lr=7.5e-5,
-        warmup_steps=100,
+        max_steps=5000 * scale,
+        batch_size=args.batch_size,
+        lr=1.5e-3,
+        min_lr=1.5e-4,
+        warmup_steps=100 * scale,
         weight_decay=0.01,
         eps=1e-8,
         betas=(0.9, 0.95),
         grad_clip=1.0,
-        save_interval=250,
-        log_interval=20,
-        val_interval=100,
+        save_interval=250 * scale,
+        log_interval=20 * scale,
+        val_interval=100 * scale,
         use_wandb=True,
         wandb_project="cs336_basics",
         wandb_entity="morethan987-chongqing-university",
@@ -102,7 +104,14 @@ def tinystories_train():
     trainer.fit()
 
 
+def parse() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Sweeping batch size")
+    parser.add_argument("--batch_size", type=int, required=True)
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
-    # pueue add -l "lr=7.5e-4" "uv run scripts/lm_train.py"
+    # pueue add -l "bs=128" "uv run scripts/lm_train.py --batch_size 128"
     # mini_test()
-    tinystories_train()
+    args = parse()
+    tinystories_train(args)
