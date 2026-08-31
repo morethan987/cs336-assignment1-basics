@@ -68,7 +68,7 @@ def tinystories_train(args: argparse.Namespace):
         device=torch.device("cuda:0"),
     )
 
-    scale = 256 / args.batch_size
+    scale = int(256 / args.batch_size)
     train_cfg = TrainConfig(
         name=f"tinystories_bs_{args.batch_size}",
         description="Sweeping batch size",
