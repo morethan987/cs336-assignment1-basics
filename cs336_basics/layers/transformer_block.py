@@ -13,9 +13,9 @@ class TransformerBlock(nn.Module):
     Args:
         d_model (int): dimensionality of the Transformer block inputs
         num_heads (int): number of heads to use in multi-head self-attention
+        max_seq_len (int): maximum sequence length that will be input
         d_ff (int | None = None): dimensionality of the position-wise feed-forward inner layer
         theta (float | None = None): theta value for RoPE, if not passed will not apply RoPE
-        max_seq_len (int | None = None): maximum sequence length that will be input, if not passed will not apply RoPE
         device (torch.device | None = None): device to store the parameters on
         dtype (torch.dtype | None=None): data type of the parameters
     """
@@ -24,9 +24,9 @@ class TransformerBlock(nn.Module):
         self,
         d_model: int,
         num_heads: int,
+        max_seq_len: int,
         d_ff: int | None = None,
         theta: float | None = None,
-        max_seq_len: int | None = None,
         device: torch.device | None = None,
         dtype: torch.dtype | None = None,
     ) -> None:
