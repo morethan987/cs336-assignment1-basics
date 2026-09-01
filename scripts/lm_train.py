@@ -1,5 +1,4 @@
 import argparse
-import math
 from pathlib import Path
 
 import torch
@@ -70,7 +69,7 @@ def tinystories_train(args: argparse.Namespace):
     )
 
     train_cfg = TrainConfig(
-        name=f"tinystories",
+        name="tinystories",
         description="Training on TinyStories data set",
         train_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-train-tokenized.bin"

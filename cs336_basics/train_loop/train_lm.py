@@ -23,7 +23,7 @@ class ModelConfig:
     num_layers: int
     d_model: int
     num_heads: int
-    d_ff: int
+    d_ff: int | None
     rope_theta: float | None = 10000.0
     device: torch.device = field(default_factory=lambda: torch.device("cuda" if torch.cuda.is_available() else "cpu"))
     dtype: torch.dtype = torch.bfloat16

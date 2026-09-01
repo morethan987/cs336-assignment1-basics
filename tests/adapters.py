@@ -167,7 +167,7 @@ def run_multihead_self_attention(
         Float[Tensor, " ... sequence_length d_model"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    mthatt = MultiheadSelfAttention(d_model, num_heads)
+    mthatt = MultiheadSelfAttention(d_model, num_heads, max_seq_len=10000)
     mthatt.load_state_dict(
         {
             "q.weight": q_proj_weight,
@@ -216,7 +216,7 @@ def run_multihead_self_attention_with_rope(
         Float[Tensor, " ... sequence_length d_model"]: Tensor with the output of running your optimized, batched multi-headed attention
         implementation with the given QKV projection weights and input features.
     """
-    mthatt = MultiheadSelfAttention(d_model, num_heads, theta, max_seq_len)
+    mthatt = MultiheadSelfAttention(d_model, num_heads, max_seq_len, theta)
     mthatt.load_state_dict(
         {
             "q.weight": q_proj_weight,
@@ -321,7 +321,7 @@ def run_transformer_block(
         Float[Tensor, "batch sequence_length d_model"] Tensor with the output of
         running the Transformer block on the input features while using RoPE.
     """
-    transformer_block = TransformerBlock(d_model, num_heads, d_ff, theta, max_seq_len)
+    transformer_block = TransformerBlock(d_model, num_heads, max_seq_len, d_ff, theta)
     transformer_block.load_state_dict(
         {
             "rms1.weight": weights["ln1.weight"],

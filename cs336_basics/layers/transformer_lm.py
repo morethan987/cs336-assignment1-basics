@@ -50,7 +50,7 @@ class TransformerLM(nn.Module):
         self.embed = Embedding(vocab_size, d_model, **self.factory_kwargs)
         self.transformers = nn.ModuleList(
             [
-                TransformerBlock(d_model, num_heads, d_ff, rope_theta, context_length, **self.factory_kwargs)
+                TransformerBlock(d_model, num_heads, context_length, d_ff, rope_theta, **self.factory_kwargs)
                 for _ in range(self.num_layers)
             ]
         )

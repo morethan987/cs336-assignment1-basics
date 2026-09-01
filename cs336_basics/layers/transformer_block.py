@@ -36,7 +36,7 @@ class TransformerBlock(nn.Module):
         self.d_ff = d_ff
         factory_kwargs = {"device": device, "dtype": dtype}
         self.rms1 = RMSNorm(d_model, **factory_kwargs)
-        self.attn = MultiheadSelfAttention(d_model, num_heads, theta, max_seq_len, **factory_kwargs)
+        self.attn = MultiheadSelfAttention(d_model, num_heads, max_seq_len, theta, **factory_kwargs)
         self.rms2 = RMSNorm(d_model, **factory_kwargs)
         self.ffn = SwiGLU(d_model, d_ff, **factory_kwargs)
 
