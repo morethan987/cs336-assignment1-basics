@@ -63,14 +63,14 @@ def tinystories_train(args: argparse.Namespace):
         num_layers=4,
         d_model=512,
         num_heads=16,
-        d_ff=1344,
+        d_ff=521 * 4,
         rope_theta=10000,
         device=torch.device("cuda:0"),
     )
 
     train_cfg = TrainConfig(
-        name="tinystories",
-        description="Training on TinyStories data set",
+        name="tinystories_swiglu_ablation",
+        description="SwiGLU ablation",
         train_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-train-tokenized.bin"
         ),
@@ -105,12 +105,12 @@ def tinystories_train(args: argparse.Namespace):
 
 def parse() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Sweeping batch size")
-    parser.add_argument("--batch_size", type=int, required=True)
+    parser.add_argument("--batch_size", type=int, default=256)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
-    # pueue add "uv run scripts/lm_train.py --batch_size 128"
+    # pueue add "uv run scripts/lm_train.py"
     # mini_test()
     args = parse()
     tinystories_train(args)

@@ -3,7 +3,7 @@ from torch import nn
 
 from .multihead_self_attention import MultiheadSelfAttention
 from .rmsnorm import RMSNorm
-from .swiglu import SwiGLU
+from .silu import SiLU
 
 
 class TransformerBlock(nn.Module):
@@ -38,7 +38,7 @@ class TransformerBlock(nn.Module):
         self.rms1 = RMSNorm(d_model, **factory_kwargs)
         self.attn = MultiheadSelfAttention(d_model, num_heads, max_seq_len, theta, **factory_kwargs)
         self.rms2 = RMSNorm(d_model, **factory_kwargs)
-        self.ffn = SwiGLU(d_model, d_ff, **factory_kwargs)
+        self.ffn = SiLU(d_model, d_ff, **factory_kwargs)
 
     def forward(self, x: torch.Tensor, token_positions: torch.Tensor | None = None) -> torch.Tensor:
         x1 = self.rms1(x)
