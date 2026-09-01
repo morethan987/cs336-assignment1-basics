@@ -69,28 +69,27 @@ def tinystories_train(args: argparse.Namespace):
         device=torch.device("cuda:0"),
     )
 
-    scale = int(256 / args.batch_size)
     train_cfg = TrainConfig(
-        name=f"tinystories_bs_{args.batch_size}_lr_scaled",
-        description="Sweeping batch size with lr scaled",
+        name=f"tinystories",
+        description="Training on TinyStories data set",
         train_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-train-tokenized.bin"
         ),
         valid_data=Path(
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_173732/TinyStoriesV2-GPT4-valid-tokenized.bin"
         ),
-        max_steps=5000 * scale,
-        batch_size=args.batch_size,
-        lr=1.5e-3 / math.sqrt(scale),
-        min_lr=1.5e-4 / math.sqrt(scale),
-        warmup_steps=100 * scale,
+        max_steps=5000,
+        batch_size=256,
+        lr=1.5e-3,
+        min_lr=1.5e-4,
+        warmup_steps=100,
         weight_decay=0.01,
         eps=1e-8,
         betas=(0.9, 0.95),
         grad_clip=1.0,
-        save_interval=250 * scale,
-        log_interval=20 * scale,
-        val_interval=100 * scale,
+        save_interval=250,
+        log_interval=20,
+        val_interval=100,
         use_wandb=True,
         wandb_project="cs336_basics",
         wandb_entity="morethan987-chongqing-university",
