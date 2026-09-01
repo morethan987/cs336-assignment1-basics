@@ -35,15 +35,15 @@ class TransformerBlock(nn.Module):
         self.num_heads = num_heads
         self.d_ff = d_ff
         factory_kwargs = {"device": device, "dtype": dtype}
-        self.rms1 = RMSNorm(d_model, **factory_kwargs)
+        # self.rms1 = RMSNorm(d_model, **factory_kwargs)
         self.attn = MultiheadSelfAttention(d_model, num_heads, theta, max_seq_len, **factory_kwargs)
-        self.rms2 = RMSNorm(d_model, **factory_kwargs)
+        # self.rms2 = RMSNorm(d_model, **factory_kwargs)
         self.ffn = SwiGLU(d_model, d_ff, **factory_kwargs)
 
     def forward(self, x: torch.Tensor, token_positions: torch.Tensor | None = None) -> torch.Tensor:
-        x1 = self.rms1(x)
-        x2 = self.attn(x1, token_positions)
+        # x1 = self.rms1(x)
+        x2 = self.attn(x, token_positions)
         x3 = x + x2
-        x4 = self.rms2(x3)
-        x5 = self.ffn(x4)
+        # x4 = self.rms2(x3)
+        x5 = self.ffn(x3)
         return x3 + x5
