@@ -957,3 +957,21 @@ Remove all of the RMSNorms from your Transformer and train. What happens at the 
 Ans: The training failed completely whose data points are all NaN. A lower lr does make traning more stable but there is a serious performance loss.
 
 ![layernorm_ablation](assets/layernorm_ablation.png)
+
+### pre_norm_ablation
+
+Modify your pre-norm Transformer implementation into a post-norm one. Train with the post- norm model and see what happens.
+Ans: Post-norm and Pre-norm perform almost the same within the first 400 steps, but the loss for Post-norm struggles to decrease from then on.
+
+![other_ablation](./assets/other_ablation.png)
+
+### no_pos_emb
+
+Modify your Transformer implementation with RoPE to remove the position embedding information entirely, and see what happens.
+Ans: The NoPE model performs much worse than the RoPE model. In other words, positional information plays a significant role in language modeling. However, from the opposite perspective, the model does learn something, as its validation loss decreases steadily. I think this can be attributed to two main factors:
+1. Causal masking leaks implicit positional information.
+2. Much of what a language model learns is static and topic-related, which is not sensitive to sequence order. In other words, we would expect to observe a catastrophic degradation in capabilities that rely heavily on order, such as logical inference.
+
+### swiglu_ablation
+
+Ans: The learning curve is nearly the same at all. Maybe the difference cannot be ovserved on such a simple and small dataset.
