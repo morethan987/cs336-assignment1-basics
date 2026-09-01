@@ -103,14 +103,63 @@ def tinystories_train(args: argparse.Namespace):
     trainer.fit()
 
 
+def owt_train(args: argparse.Namespace):
+    model_cfg = ModelConfig(
+        vocab_size=10000,
+        context_length=256,
+        num_layers=4,
+        d_model=512,
+        num_heads=16,
+        d_ff=1344,
+        rope_theta=10000,
+        device=torch.device("cuda:0"),
+    )
+
+    train_cfg = TrainConfig(
+        name=f"owt_lr_{args.lr}",
+        description="Training on OpenWebText data set",
+        train_data=Path(
+            "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_174420/owt_train_tokenized.bin"
+        ),
+        valid_data=Path(
+            "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_174420/owt_valid_tokenized.bin"
+        ),
+        max_steps=5000,
+        batch_size=256,
+        lr=args.lr,
+        min_lr=args.lr * 0.1,
+        warmup_steps=200,
+        weight_decay=0.01,
+        eps=1e-8,
+        betas=(0.9, 0.95),
+        grad_clip=1.0,
+        save_interval=250,
+        log_interval=20,
+        val_interval=100,
+        max_val_batches=200,  # maximum val: tinystories 83; owt 1013
+        use_wandb=True,
+        wandb_project="cs336_basics",
+        wandb_entity="morethan987-chongqing-university",
+    )
+
+    # validate
+    model_cfg.validate()
+    train_cfg.validate()
+
+    cfg = Config(model=model_cfg, train=train_cfg)
+    trainer = Trainer(cfg)
+    trainer.fit()
+
+
 def parse() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Sweeping batch size")
-    parser.add_argument("--batch_size", type=int, required=True)
+    parser = argparse.ArgumentParser(description="Training on OWT data set")
+    parser.add_argument("--batch_size", type=int, default=256)
+    parser.add_argument("--lr", type=float, default=1e-3)
     return parser.parse_args()
 
 
 if __name__ == "__main__":
-    # pueue add "uv run scripts/lm_train.py --batch_size 128"
+    # pueue add "uv run scripts/lm_train.py --lr 1e-3"
     # mini_test()
     args = parse()
-    tinystories_train(args)
+    owt_train(args)
