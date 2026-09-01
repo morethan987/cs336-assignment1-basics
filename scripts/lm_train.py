@@ -105,7 +105,7 @@ def tinystories_train(args: argparse.Namespace):
 
 def owt_train(args: argparse.Namespace):
     model_cfg = ModelConfig(
-        vocab_size=10000,
+        vocab_size=32000,
         context_length=256,
         num_layers=4,
         d_model=512,
@@ -125,7 +125,7 @@ def owt_train(args: argparse.Namespace):
             "/root/cs336/cs336-assignment1-basics/outputs/bpe_tokenizer/20260803_174420/owt_valid_tokenized.bin"
         ),
         max_steps=5000,
-        batch_size=256,
+        batch_size=128,
         lr=args.lr,
         min_lr=args.lr * 0.1,
         warmup_steps=200,
