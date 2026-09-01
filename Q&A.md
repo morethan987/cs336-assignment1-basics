@@ -950,3 +950,10 @@ After a few days, the bird was free and happy. It was so grateful to Tim and his
 Tim went to his mom and said, "Mom, I found a bird in the pit. Can we help it?" His mom said, "Yes, Tim. Let's take the bird to the pit and put it in a warm place."
 They took the bird to the pit and put it in a warm place. The bird was happy and said, "Thank you, Tim and Mom! You are very kind." Tim felt good that he could help the bird. From that day on, Tim and the bird became good friends.
 ```
+
+### layer_norm_ablation
+
+Remove all of the RMSNorms from your Transformer and train. What happens at the previous optimal learning rate? Can you get stability by using a lower learning rate?
+Ans: The training failed completely whose data points are all NaN. A lower lr does make traning more stable but there is a serious performance loss.
+
+![layernorm_ablation](assets/layernorm_ablation.png)
