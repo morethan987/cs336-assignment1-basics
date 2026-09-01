@@ -41,9 +41,5 @@ class TransformerBlock(nn.Module):
         self.ffn = SwiGLU(d_model, d_ff, **factory_kwargs)
 
     def forward(self, x: torch.Tensor, token_positions: torch.Tensor | None = None) -> torch.Tensor:
-        x1 = self.rms1(x)
-        x2 = self.attn(x1, token_positions)
-        x3 = x + x2
-        x4 = self.rms2(x3)
-        x5 = self.ffn(x4)
-        return x3 + x5
+        z = self.rms1(x + self.attn(x, token_positions))
+        return self.rms2(z + self.ffn(z))
