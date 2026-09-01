@@ -975,3 +975,31 @@ Ans: The NoPE model performs much worse than the RoPE model. In other words, pos
 ### swiglu_ablation
 
 Ans: The learning curve is nearly the same at all. Maybe the difference cannot be ovserved on such a simple and small dataset.
+
+### main_experiment
+
+Train your language model on OpenWebText with the same model architecture and total training iterations as TinyStories. How well does this model do?
+Ans: Although the model architecture and compute budget are identical, the model trained on OWT performs poorly and fails to generate coherent text, primarily due to its small size and limited capacity.
+
+```txt
+Input prompt:
+She and the two round-faced, sandy-haired girls were sharing a room on the hotel’s family floor, home to several mostly single-parent units.
+Original text piece:
+She and the two round-faced, sandy-haired girls were sharing a room on the hotel’s family floor, home to several mostly single-parent units. Generally, substance-abuse centers require parents to come alone, leaving their children behind. Hotel Louisville is a rarity even among family-based recovery programs, giving clients with children a free, private room, with child care and activities included. Upstairs, on one of the singles floors, Yolanda Thomas wore her reading glasses to study the Bible in bed. She’d arrived at Hotel Louisville in July, having slept off her last high on a bus from Virginia. She was living in a tidy double with another “girl in the program,” splitting a bathroom, nightstand, TV and table. Thomas’s shoes — including several pairs of pointy high heels she has little occasion to wear — were lined up along the wall.
+Generated output:
+
+
+The couple were in the room when they were in the house, and they were on the way to the house. They were on the road, and they were going to get the cash out of the house.
+
+The two were the women and women, and the two men were going to get the money.
+
+“They were going to be very upset about the situation,” said one woman. “They were going to get the money. They were going to get it. They got the money.”
+
+“They’re going to be on the back of the house,” said one woman. “They’re going to be in the house.”
+
+She said the girl was a little nervous about the girl’s death.
+
+“I think that’s going to be a lot of trouble,” she said. “I think it’s a lot of people. I think it’s a lot of people, but I think it’s a lot of people who are going to get their hands on it.”
+
+The couple’s mom, who had
+```
