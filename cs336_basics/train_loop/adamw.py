@@ -60,3 +60,7 @@ class AdamW(Optimizer):
                 p.addcdiv_(m, torch.sqrt(v).add_(eps), value=-lr_adj)
 
         return loss
+
+    def set_lr(self, lr: float) -> None:
+        for group in self.param_groups:
+            group["lr"] = lr

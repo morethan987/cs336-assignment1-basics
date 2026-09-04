@@ -165,6 +165,7 @@ class Trainer:
 
     def train_step(self, step: int) -> tuple[float, torch.Tensor, torch.Tensor]:
         lr_t = self._get_lr(step)
+        self.optimizer.set_lr(lr_t)
 
         # take data
         x, targets = load_data(
