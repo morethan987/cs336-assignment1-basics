@@ -16,9 +16,11 @@ def silu(x: torch.Tensor) -> torch.Tensor:
 def scaled_dot_product_attention(
     Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, mask: torch.Tensor | None = None
 ) -> torch.Tensor:
-    d_k = torch.tensor(Q.shape[-1])
+    # CPU scalar, reduce CUDA kernel cost
+    scale = 1.0 / (Q.shape[-1] ** 0.5)
+
     # n and m all respresent seq_len, only to tag matrix shape: (n, m) or (m, n)
-    scaled_dot = torch.multiply(torch.rsqrt(d_k), einx.dot("... n [d_k], ... m [d_k] -> ... n m", Q, K))
+    scaled_dot = einx.dot("... n [d_k], ... m [d_k] -> ... n m", Q, K) * scale
     if mask is not None:
         scaled_dot = scaled_dot.masked_fill(~mask, float("-inf"))
     return einx.dot("... n [m], ... [m] d_v -> ... n d_v", softmax(scaled_dot, -1), V)
